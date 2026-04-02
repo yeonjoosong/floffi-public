@@ -1,0 +1,31 @@
+bin/
+dist/
+coverage.out
+/floffi
+/seed-runbook
+# dev 모드(start.sh --dev) 파일 변경 감지용 폴링 스탬프
+.dev-stamp
+/goclaw
+frontend/node_modules/
+.data/
+
+# Local Claude Code config + worktrees (per-user, not shared)
+.claude/
+
+# Local-only working resources (screenshots, reference images, etc.)
+/resources/
+/docs/work.md
+/docs/work-plan.md
+/docs/invite-accept-hardening-plan.md
+
+# Python (mcp/tools/* PoC servers)
+**/.venv/
+**/__pycache__/
+**/*.pyc
+
+# Local env files — secrets (SMTP credentials, JWT secret, ...) live here.
+# .env.example is committed and shows the variable shape; the live files
+# are local-only and never tracked.
+.env
+.env.local
+.env.*.local
