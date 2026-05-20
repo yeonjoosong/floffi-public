@@ -1,0 +1,2794 @@
+/* ── Fonts ── */
+@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@700;900&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ═══════════════════════════════════════════════════
+   Scroll-to-top button — theme-adaptive, animates in
+═══════════════════════════════════════════════════ */
+@keyframes scroll-top-in {
+  from { opacity: 0; transform: translateY(10px) scale(0.85); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+[data-role="scroll-top"] {
+  animation: scroll-top-in 0.22s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+/* ═══════════════════════════════════════════════════
+   Runbook book modal — 책장 넘김 / 책 접힘 애니메이션.
+
+   넘김: 오른쪽으로 넘길 때(next)는 스프레드가 오른쪽 모서리에서 살짝
+   들리며 들어오고, 왼쪽(prev)은 반대. perspective + rotateY 로 종이가
+   젖혀지는 인상을 가볍게만 준다 (3D 책 전체 구현은 과함).
+
+   닫힘: 책갈피 리본을 당기면(runbook-ribbon-pulled) 양 페이지가 책등
+   (spine)을 축으로 안쪽으로 접히고(fold-left/right), 책 전체가 뒤이어
+   사라진다. 지속시간은 RunbookBookModal.tsx 의 CLOSE_ANIM_MS 와 동기.
+═══════════════════════════════════════════════════ */
+/* 넘김 — 슬라이드+페이드만. rotateY 를 요소별 perspective() 로 걸면
+   고정된 책등/화살표/탭과 모션이 따로 놀아서 어긋나 보인다 (이전 구현의
+   문제). 스프레드 전체가 같은 평면에서 미끄러져 들어오는 단순한 모션이
+   레이어와 일관된다. */
+@keyframes runbook-turn-next {
+  from { opacity: 0; transform: translateX(26px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes runbook-turn-prev {
+  from { opacity: 0; transform: translateX(-26px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.runbook-page-turn-next { animation: runbook-turn-next 0.22s ease-out both; }
+.runbook-page-turn-prev { animation: runbook-turn-prev 0.22s ease-out both; }
+
+/* 페이지 접힘 — 부모(.runbook-spread)가 공유 perspective 를 제공하므로
+   양 페이지가 같은 3D 공간에서 책등을 축으로 동시에 젖혀진다. */
+.runbook-spread { perspective: 1400px; }
+@keyframes runbook-fold-left {
+  to { transform: rotateY(76deg); opacity: 0.1; }
+}
+@keyframes runbook-fold-right {
+  to { transform: rotateY(-76deg); opacity: 0.1; }
+}
+.runbook-fold-left {
+  transform-origin: right center;
+  animation: runbook-fold-left 0.3s ease-in both;
+}
+.runbook-fold-right {
+  transform-origin: left center;
+  animation: runbook-fold-right 0.3s ease-in both;
+}
+
+/* 책 전체 — 페이지 접힘과 같은 타이밍으로 함께 사라진다. 중간 hold 를
+   두면 끝에서 뚝 떨어져 버벅이는 인상을 주므로 선형에 가깝게 간다.
+   wrapper 의 translate(-50%,-50%) 센터링을 깨지 않도록 opacity 만 만진다. */
+@keyframes runbook-book-close {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+.runbook-book-closing { animation: runbook-book-close 0.3s ease-in both; }
+
+/* 당겨진 리본 — 닫힘 동안 깊게 끌려 내려온 상태. hover 유틸리티와의
+   충돌은 컴포넌트에서 closing 일 때 hover 클래스를 빼는 것으로 해결
+   (!important 불필요). */
+.runbook-ribbon-pulled { transform: translateY(26px); transition: transform 0.25s ease-in; }
+
+/* ═══════════════════════════════════════════════════
+   Emoji avatar picker scrollbar — themed via CSS vars so
+   it tracks the active theme (accent thumb on a faint track)
+   instead of inheriting the near-invisible global 5px one.
+═══════════════════════════════════════════════════ */
+.emoji-picker-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(var(--bd) / 0.30) transparent;
+}
+.emoji-picker-scroll::-webkit-scrollbar { width: 8px; }
+.emoji-picker-scroll::-webkit-scrollbar-track {
+  background: transparent;
+  margin: 4px 0;
+}
+.emoji-picker-scroll::-webkit-scrollbar-thumb {
+  background: rgb(var(--bd) / 0.25);
+  border-radius: 999px;
+}
+.emoji-picker-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgb(var(--ac) / 0.55);
+}
+
+/* ═══════════════════════════════════════════════════
+   Custom color picker — hue slider. Rainbow track is
+   theme-independent (it represents hue), but the thumb
+   borrows the theme surface/border tokens so it reads
+   correctly on every theme.
+═══════════════════════════════════════════════════ */
+.color-hue-slider {
+  background: linear-gradient(
+    to right,
+    #ff0000 0%, #ffff00 17%, #00ff00 33%,
+    #00ffff 50%, #0000ff 67%, #ff00ff 83%, #ff0000 100%
+  );
+}
+.color-hue-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  background: rgb(var(--ac));
+  border: 2px solid rgb(var(--s1));
+  box-shadow: 0 0 0 1px rgb(var(--bd) / 0.4), 0 1px 3px rgb(0 0 0 / 0.35);
+  cursor: pointer;
+}
+.color-hue-slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  background: rgb(var(--ac));
+  border: 2px solid rgb(var(--s1));
+  box-shadow: 0 0 0 1px rgb(var(--bd) / 0.4);
+  cursor: pointer;
+}
+.color-hue-slider::-moz-range-track {
+  background: transparent;
+}
+
+/* RGB channel sliders — same themed thumb as the hue slider; track color is
+   set inline per-channel (a gradient from the channel's min to max). */
+.color-rgb-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  background: rgb(var(--ac));
+  border: 2px solid rgb(var(--s1));
+  box-shadow: 0 0 0 1px rgb(var(--bd) / 0.4), 0 1px 3px rgb(0 0 0 / 0.35);
+  cursor: pointer;
+}
+.color-rgb-slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  background: rgb(var(--ac));
+  border: 2px solid rgb(var(--s1));
+  box-shadow: 0 0 0 1px rgb(var(--bd) / 0.4);
+  cursor: pointer;
+}
+.color-rgb-slider::-moz-range-track {
+  background: transparent;
+}
+
+/* RGB numeric inputs — hide the spinner arrows so all 3 digits fit. */
+.color-rgb-num::-webkit-outer-spin-button,
+.color-rgb-num::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.color-rgb-num {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+/* Win98 — square 3D bevel */
+[data-theme="win98"] [data-role="scroll-top"] {
+  width: 36px !important;
+  height: 36px !important;
+  border-radius: 0 !important;
+  background: #c0c0c0 !important;
+  color: #000000 !important;
+  box-shadow:
+    inset 1px 1px 0 #ffffff,
+    inset -1px -1px 0 #404040,
+    inset 2px 2px 0 #dfdfdf,
+    inset -2px -2px 0 #808080 !important;
+  transform: none !important;
+}
+[data-theme="win98"] [data-role="scroll-top"]:hover {
+  background: #d4d4d4 !important;
+  transform: none !important;
+}
+[data-theme="win98"] [data-role="scroll-top"]:active {
+  box-shadow:
+    inset 1px 1px 0 #404040,
+    inset -1px -1px 0 #ffffff,
+    inset 2px 2px 0 #808080,
+    inset -2px -2px 0 #dfdfdf !important;
+}
+
+/* Kitsch — pop-art sticker w/ hard offset shadow */
+[data-theme="kitsch"] [data-role="scroll-top"] {
+  border: 3px solid rgb(var(--ac-hi)) !important;
+  box-shadow: 0 4px 0 rgb(var(--ac-hi)),
+              0 6px 14px rgb(var(--ac) / 0.25) !important;
+  border-radius: 999px !important;
+}
+[data-theme="kitsch"] [data-role="scroll-top"]:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 0 rgb(var(--ac-hi)),
+              0 9px 18px rgb(var(--ac) / 0.30) !important;
+}
+[data-theme="kitsch"] [data-role="scroll-top"]:active {
+  transform: translateY(2px) !important;
+  box-shadow: 0 1px 0 rgb(var(--ac-hi)) !important;
+}
+
+/* Candy — glossy pillow w/ inner highlight */
+[data-theme="candy"] [data-role="scroll-top"] {
+  background: linear-gradient(180deg, rgb(var(--ac-lo)) 0%, rgb(var(--ac)) 60%, rgb(var(--ac-hi)) 100%) !important;
+  box-shadow:
+    0 5px 14px rgb(var(--ac) / 0.40),
+    inset 0 1.5px 0 rgb(255 255 255 / 0.65),
+    inset 0 -1.5px 0 rgb(var(--ac-hi) / 0.30) !important;
+  border: 2px solid rgb(255 255 255 / 0.5) !important;
+}
+[data-theme="candy"] [data-role="scroll-top"]:hover {
+  transform: translateY(-2px) scale(1.05) !important;
+  box-shadow:
+    0 8px 20px rgb(var(--ac) / 0.50),
+    inset 0 1.5px 0 rgb(255 255 255 / 0.75) !important;
+}
+
+/* Toy — chunky 3D lamp button */
+[data-theme="toy"] [data-role="scroll-top"] {
+  background: linear-gradient(180deg, rgb(var(--ac-lo)) 0%, rgb(var(--ac)) 50%, rgb(var(--ac-hi)) 100%) !important;
+  border: 2.5px solid rgb(var(--ac-hi)) !important;
+  box-shadow:
+    0 5px 0 rgb(var(--ac-hi) / 0.65),
+    0 9px 18px rgb(var(--ac) / 0.40),
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.45) !important;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.20);
+}
+[data-theme="toy"] [data-role="scroll-top"]:hover {
+  transform: translateY(-2px) !important;
+  box-shadow:
+    0 7px 0 rgb(var(--ac-hi) / 0.75),
+    0 12px 22px rgb(var(--ac) / 0.50),
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.55) !important;
+}
+[data-theme="toy"] [data-role="scroll-top"]:active {
+  transform: translateY(3px) !important;
+  box-shadow:
+    0 1px 0 rgb(var(--ac-hi) / 0.55),
+    0 3px 8px rgb(var(--ac) / 0.30) !important;
+}
+
+/* Kitsch / Candy / Toy — hover scale conflict guard:
+   the default Tailwind `hover:scale-110` on the button already animates,
+   but theme overrides above set their own transform on hover so the
+   default scale gets cleanly replaced (no Tailwind `transform-none` needed
+   because each rule sets its own transform on hover) */
+
+/* ═══════════════════════════════════════════════════
+   Cute confirm toast popup — animates in, theme-aware
+═══════════════════════════════════════════════════ */
+@keyframes confirm-toast-in {
+  0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.85) rotate(-2deg); }
+  60%  { opacity: 1; transform: translate(-50%, -50%) scale(1.03) rotate(1deg); }
+  100% { opacity: 1; transform: translate(-50%, -50%) scale(1) rotate(0deg); }
+}
+@keyframes confirm-toast-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes confirm-toast-sparkle {
+  0%, 100% { transform: rotate(-12deg) scale(1);   opacity: 0.85; }
+  50%      { transform: rotate(18deg)  scale(1.3); opacity: 1; }
+}
+@keyframes confirm-toast-mascot {
+  0%, 100% { transform: translateY(0) rotate(-3deg); }
+  50%      { transform: translateY(-3px) rotate(3deg); }
+}
+
+.confirm-toast {
+  animation: confirm-toast-in 0.36s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+.confirm-toast-backdrop {
+  animation: confirm-toast-fade-in 0.18s ease-out both;
+}
+.confirm-toast-sparkle {
+  display: inline-block;
+  animation: confirm-toast-sparkle 1.4s ease-in-out infinite;
+  transform-origin: center;
+}
+.confirm-toast-mascot {
+  display: inline-block;
+  animation: confirm-toast-mascot 2.6s ease-in-out infinite;
+  transform-origin: 50% 92%;
+}
+
+/* Toy theme: thicker chunky bezel for the toast */
+[data-theme="toy"] .confirm-toast {
+  border-width: 4px !important;
+  box-shadow:
+    0 6px 0 rgb(var(--bd) / 0.25),
+    0 14px 28px rgba(0, 0, 0, 0.20),
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.6) !important;
+}
+
+/* Candy theme: extra glossy plastic feel */
+[data-theme="candy"] .confirm-toast {
+  background:
+    linear-gradient(180deg, rgb(255 255 255 / 0.7) 0%, transparent 30%),
+    rgb(var(--s1)) !important;
+  box-shadow:
+    inset 0 1.5px 0 rgb(255 255 255 / 1),
+    0 12px 32px rgb(var(--ac) / 0.30) !important;
+}
+
+/* Kitsch theme: pop-art sticker shadow */
+[data-theme="kitsch"] .confirm-toast {
+  box-shadow:
+    6px 6px 0 rgb(var(--ac-hi) / 0.35),
+    0 12px 28px rgba(0, 0, 0, 0.20) !important;
+}
+
+/* ═══════════════════════════════════════════════════
+   Container queries — kanban columns auto-adapt to
+   their own width regardless of viewport / device
+═══════════════════════════════════════════════════ */
+[data-role="kanban-col"] {
+  container-type: inline-size;
+}
+
+/* Pipeline row auto-fit: chips default to wrap so narrow containers
+   never overflow / scroll. The row itself is its own inline-size
+   container — once its measured width crosses the natural single-line
+   width of all 5 chips + arrows we force nowrap so they line up. The
+   threshold sits a hair below the natural width so the layout doesn't
+   oscillate at the boundary. */
+[data-role="pipeline-row"] {
+  container-type: inline-size;
+}
+@container (min-width: 380px) {
+  [data-role="pipeline-row"] {
+    flex-wrap: nowrap !important;
+  }
+}
+
+/* Toy theme has the narrowest board interior (chassis margin+border
+   ~24px). Tighten chip padding + arrow gap so the row's natural width
+   drops below the toy board interior, letting nowrap kick in there
+   too. Other themes already fit at the default chip size. */
+[data-theme="toy"] [data-role="pipeline-row"] {
+  gap: 0.125rem !important;
+}
+[data-theme="toy"] [data-role="pipeline-row"] > div {
+  gap: 0.125rem !important;
+}
+[data-theme="toy"] [data-role="pipeline-stage"] {
+  padding-left: 0.5rem !important;
+  padding-right: 0.5rem !important;
+  font-size: 10px !important;
+}
+@container (min-width: 300px) {
+  [data-theme="toy"] [data-role="pipeline-row"] {
+    flex-wrap: nowrap !important;
+  }
+}
+
+/* Narrow columns: shrink the section icon first, then hide it, so the
+   title (which truncates via Tailwind .truncate) and the count chip
+   never overflow under the right-side collapse/close buttons. Header
+   padding + flex gap stay fixed across breakpoints so the "0 ^ X"
+   spacing on the right is consistent at every width. The h3 keeps
+   single-line .truncate — a multi-line clamp would force the h3 box
+   to be as wide as its longest word and push the chip behind the
+   right cluster. */
+@container (max-width: 200px) {
+  [data-role="section-icon"] img,
+  [data-role="section-icon"] svg {
+    height: 1.75rem !important;
+    width:  1.75rem !important;
+  }
+}
+@container (max-width: 160px) {
+  [data-role="section-icon"] {
+    display: none !important;
+  }
+}
+
+/* Very narrow columns (≤180px): also shrink card padding so content fits */
+@container (max-width: 180px) {
+  [data-role="task-card"] {
+    padding: 0.625rem;
+  }
+}
+
+/* Global <select> chevron — every native select gets a custom down-
+   arrow tucked inward from the right edge (10px in) so the chevron
+   reads as "attached to the value" rather than floating off in the
+   trailing margin. padding-right reserves a 28px gutter so option
+   text never slides under the icon.
+   win98 keeps its native chunky chevron (matches the raised-bezel
+   widget look) — see the override later in this file.
+   .select-compact stays as a tighter variant for narrow controls
+   (e.g. the image-grid-count picker where labels are "4 (2x2)"). */
+select:not([multiple]) {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'><path d='M3 5l3 3 3-3' stroke='%239ca3af' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 12px 12px;
+  padding-right: 28px;
+}
+.select-compact {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'><path d='M3 5l3 3 3-3' stroke='%23888' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 6px center;
+  background-size: 10px 10px;
+  padding-right: 20px;
+}
+
+/* ═══════════════════════════════════════════════════
+   CSS Custom Properties — space-separated R G B
+   so Tailwind opacity modifiers work (bg-ac/20 etc.)
+═══════════════════════════════════════════════════ */
+
+/* ── Default = Dark theme ── */
+:root {
+  --base:   8   8  17;
+  --s1:    14  14  28;
+  --s2:    20  20  42;
+  --s3:    28  28  53;
+  --bd:   255 255 255;
+  --t1:   226 232 240;
+  --t2:   148 163 184;
+  --t3:    71  85 105;
+  --ac:   255 138  29;
+  --ac-lo: 255 162  60;
+  --ac-hi: 220  95   0;
+  /* semantic status */
+  --c-ok:    22 163  74;
+  --c-warn: 253 224  71;
+  --c-err:  252 165 165;
+}
+
+[data-theme="dark"] {
+  --base:   8   8  17;
+  --s1:    14  14  28;
+  --s2:    20  20  42;
+  --s3:    28  28  53;
+  --bd:   255 255 255;
+  --t1:   226 232 240;
+  --t2:   148 163 184;
+  --t3:    71  85 105;
+  --ac:   255 138  29;
+  --ac-lo: 255 162  60;
+  --ac-hi: 220  95   0;
+  --c-ok:    22 163  74;
+  --c-warn: 253 224  71;
+  --c-err:  252 165 165;
+  color-scheme: dark;
+}
+
+[data-theme="light"] {
+  --base:  245 244 252;
+  --s1:    255 255 255;
+  --s2:    240 238 252;
+  --s3:    225 222 244;
+  --bd:      0   0   0;
+  --t1:     15  10  30;
+  --t2:     70  65  95;
+  --t3:    135 130 160;
+  --ac:    255 138  29;
+  --ac-lo:  255 162  60;
+  --ac-hi:  220  95   0;
+  --c-ok:   21 128  61;
+  --c-warn: 133  77  14;
+  --c-err:  185  28  28;
+  color-scheme: light;
+}
+
+/* ─────────────────────────────────────────────────
+   CANDY — pastel kidult toy aesthetic
+   baby blue base, cotton-candy pink accent,
+   lavender / mint / peach pops
+───────────────────────────────────────────────── */
+[data-theme="candy"] {
+  --base:  235 246 252;   /* baby blue tint background */
+  --s1:    255 255 255;   /* white card surface */
+  --s2:    253 232 242;   /* soft pink surface */
+  --s3:    234 222 245;   /* pastel lavender surface */
+  --bd:    180 200 230;   /* soft blue-purple border */
+  --t1:     58  78 110;   /* deep pastel navy */
+  --t2:    115 130 165;
+  --t3:    175 188 210;
+  --ac:    255 138 192;   /* candy pink */
+  --ac-lo: 255 174 214;
+  --ac-hi: 218  92 158;
+  --c-ok:  122 200 160;   /* mint green */
+  --c-warn: 240 195 110;  /* peach-yellow */
+  --c-err: 244 130 145;   /* coral */
+  color-scheme: light;
+}
+
+/* candy — page bg with polka-dot toy packaging pattern */
+[data-theme="candy"] {
+  background:
+    radial-gradient(circle at 18% 22%, rgb(255 200 230 / 0.18) 0px, transparent 220px),
+    radial-gradient(circle at 82% 78%, rgb(180 200 240 / 0.18) 0px, transparent 260px),
+    radial-gradient(rgb(255 138 192 / 0.07) 1.6px, transparent 2px),
+    radial-gradient(rgb(180 200 230 / 0.06) 1.6px, transparent 2px),
+    #ebf6fc !important;
+  background-size: 100% 100%, 100% 100%, 32px 32px, 56px 56px !important;
+  background-position: 0 0, 0 0, 0 0, 16px 16px !important;
+  background-attachment: fixed, fixed, fixed, fixed, fixed !important;
+}
+
+/* candy — topbar: glossy console-screen feel */
+[data-theme="candy"] [data-role="topbar"] {
+  background: linear-gradient(180deg, #ffffff 0%, #fff8fb 100%) !important;
+  border-bottom: 2.5px solid rgb(var(--ac) / 0.30) !important;
+  box-shadow:
+    0 6px 20px rgb(180 200 230 / 0.28),
+    inset 0 1.5px 0 rgb(255 255 255 / 1) !important;
+}
+
+/* candy — brand "G" as a glossy candy ball */
+[data-theme="candy"] [data-role="topbar"] > button:first-of-type > div:first-child {
+  border-radius: 50% !important;
+  background: linear-gradient(135deg, rgb(var(--ac-lo)) 0%, rgb(var(--ac)) 60%, rgb(var(--ac-hi)) 100%) !important;
+  box-shadow:
+    inset 0 -2.5px 0 rgb(var(--ac-hi) / 0.45),
+    inset 0 2px 0 rgb(255 255 255 / 0.55),
+    0 3px 10px rgb(var(--ac) / 0.40),
+    0 0 0 2px rgb(255 255 255 / 0.6) !important;
+  position: relative !important;
+  overflow: hidden;
+}
+[data-theme="candy"] [data-role="topbar"] > button:first-of-type > div:first-child::before {
+  content: "";
+  position: absolute;
+  top: 4px;
+  left: 5px;
+  width: 9px;
+  height: 5px;
+  background: rgb(255 255 255 / 0.85);
+  border-radius: 50%;
+  filter: blur(0.5px);
+}
+
+/* candy — sidebars derive their tint from the live accent color so a
+   custom accent (the user's color-swatch pick) carries through.
+   Previously these were hardcoded soft-pink / lavender, which clashed
+   with non-pink accents. The white layer underneath keeps the
+   candy-pastel feel; the accent rgba layer adds the hue.
+
+   Left side: top → bottom, slightly stronger at the top so the
+   sidebar reads as a panel rather than a flat block.
+   Right side: opposite gradient direction so the two flanks visually
+   mirror each other instead of being identical. */
+[data-theme="candy"] [data-role="left-sidebar"] {
+  background:
+    linear-gradient(180deg, rgb(var(--ac) / 0.10) 0%, rgb(var(--ac) / 0.04) 100%),
+    #ffffff !important;
+  border-right: 2px solid rgb(var(--ac) / 0.22) !important;
+  box-shadow: inset 1px 0 0 rgb(255 255 255 / 0.6) !important;
+}
+
+[data-theme="candy"] [data-role="right-sidebar"] {
+  background:
+    linear-gradient(180deg, rgb(var(--ac) / 0.04) 0%, rgb(var(--ac) / 0.10) 100%),
+    #ffffff !important;
+  border-left: 2px solid rgb(var(--ac) / 0.22) !important;
+  box-shadow: inset -1px 0 0 rgb(255 255 255 / 0.6) !important;
+}
+
+/* candy — quick assign drawer */
+[data-theme="candy"] [data-role="quick-assign"] {
+  background: linear-gradient(180deg, rgb(var(--ac) / 0.06) 0%, rgb(var(--ac) / 0.02) 100%) !important;
+  border-bottom: 2px solid rgb(var(--ac) / 0.22) !important;
+}
+
+/* candy — kanban columns: rounded glossy plastic feel */
+[data-theme="candy"] [data-role="kanban-col"] {
+  border: 2px solid rgb(180 200 230 / 0.50) !important;
+  background:
+    linear-gradient(180deg, rgb(255 255 255 / 0.7) 0%, transparent 30%),
+    #ffffff !important;
+  box-shadow:
+    inset 0 1.5px 0 rgb(255 255 255 / 1),
+    inset 0 -1px 0 rgb(180 200 230 / 0.20),
+    0 6px 18px rgb(180 200 230 / 0.30) !important;
+  border-radius: 1.75rem !important;
+}
+
+[data-theme="candy"] [data-role="kanban-header"] {
+  background: linear-gradient(180deg, #fde2ed 0%, #fff4f8 100%) !important;
+  border-bottom: 2px solid rgb(var(--ac) / 0.20) !important;
+  border-radius: 1.6rem 1.6rem 0 0 !important;
+  box-shadow: inset 0 1.5px 0 rgb(255 255 255 / 0.95) !important;
+}
+
+/* candy — cards (inbox reports, vault docs, etc.) */
+[data-theme="candy"] [data-role="card"] {
+  border: 2px solid rgb(180 200 230 / 0.45) !important;
+  background:
+    linear-gradient(180deg, rgb(255 255 255 / 0.7) 0%, transparent 30%),
+    #ffffff !important;
+  box-shadow:
+    inset 0 1.5px 0 rgb(255 255 255 / 1),
+    inset 0 -1px 0 rgb(180 200 230 / 0.18),
+    0 4px 12px rgb(180 200 230 / 0.22) !important;
+  border-radius: 1.25rem !important;
+}
+[data-theme="candy"] [data-role="card-highlight"] {
+  border: 2px solid rgb(var(--ac) / 0.55) !important;
+  box-shadow:
+    inset 0 1.5px 0 rgb(255 255 255 / 1),
+    0 5px 16px rgb(var(--ac) / 0.25) !important;
+}
+
+/* candy — task cards (collectible-sticker feel) */
+[data-theme="candy"] [data-role="task-card"] {
+  border: 2px solid rgb(180 200 230 / 0.40) !important;
+  background:
+    linear-gradient(180deg, rgb(255 255 255 / 0.65) 0%, transparent 35%),
+    #ffffff !important;
+  box-shadow:
+    inset 0 1.5px 0 rgb(255 255 255 / 1),
+    0 4px 12px rgb(180 200 230 / 0.22) !important;
+  border-radius: 1.25rem !important;
+  transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.18s !important;
+}
+[data-theme="candy"] [data-role="task-card"]:hover {
+  transform: translateY(-2px) !important;
+  box-shadow:
+    inset 0 1.5px 0 rgb(255 255 255 / 1),
+    0 8px 20px rgb(var(--ac) / 0.18) !important;
+}
+
+/* candy — buttons: pillow-puff with bouncy press */
+[data-theme="candy"] button {
+  transition: transform 0.12s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.12s !important;
+}
+[data-theme="candy"] button:not([data-role="icon-btn"]):not([data-role^="sidebar-tab"]):not([data-role="primary-btn"]):not([data-role="color-swatch"]):not([data-role="row-btn"]) {
+  border-radius: 999px !important;
+  border: 1.5px solid rgb(var(--ac) / 0.30) !important;
+  background: linear-gradient(180deg, #ffffff 0%, #fdf0f6 100%) !important;
+  /* Negative spread on the solid drop tucks it inside the pill outline
+     so it doesn't render as a horizontal stripe past the rounded ends. */
+  box-shadow:
+    0 3px 0 -1.5px rgb(var(--ac) / 0.18),
+    0 5px 12px rgb(180 200 230 / 0.20),
+    inset 0 1.5px 0 rgb(255 255 255 / 1),
+    inset 0 -1px 0 rgb(var(--ac) / 0.10) !important;
+}
+[data-theme="candy"] button:not([data-role="icon-btn"]):not([data-role^="sidebar-tab"]):not([data-role="primary-btn"]):not([data-role="color-swatch"]):not([data-role="row-btn"]):hover {
+  transform: translateY(-2px) !important;
+  box-shadow:
+    0 5px 0 -1.5px rgb(var(--ac) / 0.25),
+    0 8px 16px rgb(var(--ac) / 0.18),
+    inset 0 1.5px 0 rgb(255 255 255 / 1) !important;
+}
+[data-theme="candy"] button:not([data-role="icon-btn"]):not([data-role^="sidebar-tab"]):not([data-role="primary-btn"]):not([data-role="color-swatch"]):not([data-role="row-btn"]):active {
+  transform: translateY(2px) !important;
+  box-shadow:
+    0 1px 0 -1.5px rgb(var(--ac) / 0.20),
+    0 2px 6px rgb(var(--ac) / 0.15),
+    inset 0 1px 0 rgb(255 255 255 / 0.7) !important;
+}
+
+/* candy — accent color swatches (preserve inline background; candy bubble look) */
+[data-theme="candy"] [data-role="color-swatch"] {
+  border-radius: 999px !important;
+  border: 2px solid rgb(255 255 255 / 0.85) !important;
+  box-shadow:
+    0 2px 6px rgb(0 0 0 / 0.12),
+    inset 0 1.5px 0 rgb(255 255 255 / 0.45),
+    inset 0 -1.5px 0 rgb(0 0 0 / 0.10) !important;
+}
+
+/* candy — primary button: candy gradient pillow */
+[data-theme="candy"] [data-role="primary-btn"] {
+  background: linear-gradient(180deg, rgb(var(--ac-lo)) 0%, rgb(var(--ac)) 60%, rgb(var(--ac-hi)) 100%) !important;
+  border: 2px solid rgb(var(--ac-hi) / 0.55) !important;
+  border-radius: 999px !important;
+  box-shadow:
+    0 4px 0 rgb(var(--ac-hi) / 0.45),
+    0 8px 18px rgb(var(--ac) / 0.35),
+    inset 0 1.5px 0 rgb(255 255 255 / 0.55),
+    inset 0 -2px 0 rgb(var(--ac-hi) / 0.30) !important;
+  color: #ffffff !important;
+  letter-spacing: 0.02em;
+}
+[data-theme="candy"] [data-role="primary-btn"]:hover {
+  transform: translateY(-2px) !important;
+  box-shadow:
+    0 6px 0 rgb(var(--ac-hi) / 0.50),
+    0 12px 24px rgb(var(--ac) / 0.45),
+    inset 0 1.5px 0 rgb(255 255 255 / 0.65) !important;
+}
+[data-theme="candy"] [data-role="primary-btn"]:active {
+  transform: translateY(3px) !important;
+  box-shadow:
+    0 1px 0 rgb(var(--ac-hi) / 0.40),
+    0 2px 8px rgb(var(--ac) / 0.30) !important;
+}
+
+/* candy — icon buttons */
+[data-theme="candy"] [data-role="icon-btn"] {
+  border: 1.5px solid rgb(var(--ac) / 0.30) !important;
+  background: linear-gradient(180deg, #ffffff 0%, #fdf3f8 100%) !important;
+  box-shadow:
+    0 2px 0 rgb(var(--ac) / 0.15),
+    0 3px 8px rgb(180 200 230 / 0.20),
+    inset 0 1px 0 rgb(255 255 255 / 1) !important;
+  border-radius: 999px !important;
+}
+[data-theme="candy"] [data-role="icon-btn"]:hover {
+  transform: translateY(-1.5px) !important;
+  box-shadow:
+    0 4px 0 rgb(var(--ac) / 0.22),
+    0 6px 12px rgb(var(--ac) / 0.18) !important;
+}
+[data-theme="candy"] [data-role="icon-btn"]:active {
+  transform: translateY(2px) !important;
+  box-shadow:
+    0 0 0 rgb(var(--ac) / 0.18),
+    0 1px 4px rgb(var(--ac) / 0.15) !important;
+}
+
+/* candy — stat chips (game HUD bubbles) */
+[data-theme="candy"] [data-role="stat-chip"] {
+  border-radius: 999px !important;
+  border-width: 2px !important;
+  font-weight: 800 !important;
+  box-shadow:
+    0 2px 0 rgb(var(--ac) / 0.12),
+    0 4px 10px rgb(180 200 230 / 0.18),
+    inset 0 1.5px 0 rgb(255 255 255 / 0.9) !important;
+}
+
+/* candy — sidebar tabs */
+[data-theme="candy"] [data-role^="sidebar-tab"] {
+  border-radius: 0 !important;
+  transition: background 0.15s ease !important;
+}
+[data-theme="candy"] [data-role="sidebar-tab-active"] {
+  background: linear-gradient(180deg, rgb(var(--ac) / 0.06) 0%, rgb(var(--ac) / 0.16) 100%) !important;
+  border-bottom: 3px solid rgb(var(--ac)) !important;
+  box-shadow: inset 0 -3px 8px rgb(var(--ac) / 0.10) !important;
+}
+
+/* candy — tags (rounded sticker) */
+[data-theme="candy"] [data-role="tag"] {
+  background: linear-gradient(180deg, rgb(var(--ac) / 0.06) 0%, rgb(var(--ac) / 0.14) 100%) !important;
+  border: 1.5px solid rgb(var(--ac) / 0.30) !important;
+  color: rgb(var(--ac-hi)) !important;
+  font-weight: 700;
+  border-radius: 999px !important;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.6) !important;
+}
+
+/* candy — count badge */
+[data-theme="candy"] [data-role="count-badge"] {
+  background: linear-gradient(180deg, rgb(var(--ac) / 0.10) 0%, rgb(var(--ac) / 0.20) 100%) !important;
+  color: rgb(var(--ac-hi)) !important;
+  border: 1.5px solid rgb(var(--ac) / 0.30) !important;
+  border-radius: 999px !important;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.7) !important;
+}
+
+/* candy — inputs: rounded pillow with soft inner shadow.
+   Checkbox/radio excluded — they're tiny native widgets where the heavy
+   border + rounding clips the top of the browser-drawn check glyph. */
+[data-theme="candy"] input:not([type="color"]):not([type="range"]):not([type="number"]):not([type="checkbox"]):not([type="radio"]),
+[data-theme="candy"] select,
+[data-theme="candy"] textarea {
+  border: 2px solid rgb(180 200 230 / 0.45) !important;
+  border-radius: 1rem !important;
+  background-color: #ffffff !important;
+  box-shadow:
+    inset 0 2px 4px rgb(180 200 230 / 0.12),
+    inset 0 1px 0 rgb(255 255 255 / 0.95) !important;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
+}
+[data-theme="candy"] input:not([type="color"]):not([type="range"]):not([type="number"]):not([type="checkbox"]):not([type="radio"]):focus,
+[data-theme="candy"] select:focus,
+[data-theme="candy"] textarea:focus {
+  border-color: rgb(var(--ac) / 0.65) !important;
+  box-shadow:
+    inset 0 2px 4px rgb(180 200 230 / 0.10),
+    0 0 0 3px rgb(var(--ac) / 0.18) !important;
+  outline: none !important;
+}
+
+/* candy — scrollbar */
+[data-theme="candy"] ::-webkit-scrollbar-thumb {
+  background: rgb(var(--ac) / 0.40) !important;
+  border-radius: 999px !important;
+}
+[data-theme="candy"] ::-webkit-scrollbar-thumb:hover {
+  background: rgb(var(--ac) / 0.65) !important;
+}
+
+/* ─────────────────────────────────────────────────
+   TOY — Game Boy / Pac-Man pocket-console aesthetic
+   yellow chassis, brown bezel, lamp-red accent,
+   cute kawaii character details
+───────────────────────────────────────────────── */
+[data-theme="toy"] {
+  /* Toy chassis palette. JS (lib/theme.ts) overrides these via inline
+     style on <html> from the user's picker. The defaults below keep
+     the legacy yellow look when no override is active. Anything that
+     wants the chassis tint should read --toy-chassis* — not the raw
+     hexes that used to live below. */
+  --toy-chassis:       250 204  21; /* #facc15 */
+  --toy-chassis-soft:  253 224  71; /* #fde047 */
+  --toy-chassis-deep:  234 179   8; /* #eab308 */
+  --toy-chassis-cream: 254 249 195; /* #fef9c3 */
+  --toy-chassis-tint:  254 252 232; /* #fefce8 */
+
+  --base:  var(--toy-chassis);
+  --s1:    var(--toy-chassis-tint);
+  --s2:    var(--toy-chassis-soft);
+  --s3:    var(--toy-chassis);
+  --bd:    146  64  14;    /* dark brown bezel */
+  --t1:     69  26   3;    /* deep brown text */
+  --t2:    124  45  18;
+  --t3:    180 110  60;
+  --ac:    220  38  38;    /* lamp red */
+  --ac-lo: 248 113 113;
+  --ac-hi: 153  27  27;
+  --c-ok:   22 101  52;
+  --c-warn: 217 119   6;
+  --c-err: 153  27  27;
+  color-scheme: light;
+}
+
+/* toy — body bg = device chassis exterior (gradient driven by chassis color) */
+[data-theme="toy"] {
+  background: radial-gradient(circle at 50% 30%,
+    rgb(var(--toy-chassis-soft)) 0%,
+    rgb(var(--toy-chassis))      70%,
+    rgb(var(--toy-chassis-deep)) 100%) !important;
+}
+
+/* toy — TOPBAR = device header w/ speaker grille, dark bezel */
+[data-theme="toy"] [data-role="topbar"] {
+  background:
+    repeating-linear-gradient(90deg, transparent 0 5px, rgba(146, 64, 14, 0.10) 5px 6px),
+    linear-gradient(180deg, rgb(var(--toy-chassis-cream)) 0%, rgb(var(--toy-chassis-soft)) 60%, rgb(var(--toy-chassis)) 100%) !important;
+  border-bottom: 5px solid rgb(var(--bd)) !important;
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.8),
+    0 4px 0 rgb(var(--ac-hi) / 0.25),
+    0 8px 14px rgba(0, 0, 0, 0.10) !important;
+  position: relative;
+}
+/* toy — decorative "screw" dots at top-bar corners */
+[data-theme="toy"] [data-role="topbar"]::before,
+[data-theme="toy"] [data-role="topbar"]::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  background: radial-gradient(circle at 35% 35%, rgb(var(--toy-chassis-cream)) 0%, #b45309 100%);
+  border-radius: 50%;
+  transform: translateY(-50%);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.4);
+  pointer-events: none;
+}
+[data-theme="toy"] [data-role="topbar"]::before { left: 6px; }
+[data-theme="toy"] [data-role="topbar"]::after  { right: 6px; }
+
+/* toy — brand "G" logo as Pac-Man head (round + yellow) */
+[data-theme="toy"] [data-role="topbar"] > button:first-of-type > div:first-child {
+  background: radial-gradient(circle at 35% 30%, rgb(var(--toy-chassis-soft)) 0%, rgb(var(--toy-chassis)) 60%, rgb(var(--toy-chassis-deep)) 100%) !important;
+  border-radius: 50% !important;
+  border: 2px solid #92400e !important;
+  box-shadow:
+    inset 0 -2px 0 rgba(120, 53, 15, 0.50),
+    inset 0 2px 0 rgba(255, 255, 255, 0.45),
+    0 3px 0 #78350f,
+    0 5px 12px rgba(0, 0, 0, 0.15) !important;
+  position: relative !important;
+  color: #451a03 !important;
+}
+/* toy — Pac-Man eye dot */
+[data-theme="toy"] [data-role="topbar"] > button:first-of-type > div:first-child::before {
+  content: "";
+  position: absolute;
+  top: 4px;
+  right: 8px;
+  width: 4px;
+  height: 4px;
+  background: #1c1917;
+  border-radius: 50%;
+  box-shadow: -1px -1px 0 rgba(255, 255, 255, 0.4);
+}
+
+/* toy — BOARD SHELL = the LCD screen with thick chassis bezel.
+   The previous 3px chassis-soft inset ring stacked a second visible
+   rounded corner (~1.5rem) just inside the outer 1.75rem brown bezel,
+   so users saw three concentric corners at slightly different radii
+   and it read as a mismatch. Drop the ring — the cream content sits
+   directly inside the brown border, giving a single clean concentric
+   pair (outer 1.75rem brown, inner content following the same curve). */
+[data-theme="toy"] [data-role="board-shell"] {
+  margin: 1rem !important;
+  padding: 0 !important;
+  border: 6px solid rgb(var(--bd)) !important;
+  border-radius: 1.75rem !important;
+  background: rgb(var(--toy-chassis-cream)) !important;
+  box-shadow:
+    inset 0 4px 16px rgba(120, 53, 15, 0.18),
+    inset 0 -2px 8px rgba(120, 53, 15, 0.10),
+    0 6px 0 #78350f,
+    0 14px 28px rgba(0, 0, 0, 0.20) !important;
+  overflow: hidden !important;
+  position: relative;
+}
+/* toy — speaker grille at the bottom of the screen frame */
+[data-theme="toy"] [data-role="board-shell"]::after {
+  content: "";
+  position: absolute;
+  bottom: 6px;
+  left: 50%;
+  width: 60px;
+  height: 4px;
+  background: repeating-linear-gradient(90deg, #92400e 0 3px, transparent 3px 6px);
+  transform: translateX(-50%);
+  border-radius: 2px;
+  pointer-events: none;
+  z-index: 5;
+}
+
+/* toy — sidebars within screen blend in (cream w/ subtle tint) */
+[data-theme="toy"] [data-role="left-sidebar"] {
+  background: linear-gradient(180deg, rgb(var(--toy-chassis-tint)) 0%, rgb(var(--toy-chassis-cream)) 100%) !important;
+  border-right: 2px dashed rgb(var(--bd) / 0.35) !important;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.6) !important;
+}
+[data-theme="toy"] [data-role="right-sidebar"] {
+  background: linear-gradient(180deg, rgb(var(--toy-chassis-tint)) 0%, rgb(var(--toy-chassis-cream)) 100%) !important;
+  border-left: 2px dashed rgb(var(--bd) / 0.35) !important;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.6) !important;
+}
+
+/* toy — quick assign drawer */
+[data-theme="toy"] [data-role="quick-assign"] {
+  background: linear-gradient(180deg, rgb(var(--ac) / 0.06) 0%, rgb(var(--ac) / 0.02) 100%) !important;
+  border-bottom: 2px dashed rgb(var(--ac) / 0.40) !important;
+}
+
+/* toy — KANBAN COLUMNS as cute card slots with chunky borders */
+[data-theme="toy"] [data-role="kanban-col"] {
+  border: 3px solid rgb(var(--bd) / 0.55) !important;
+  border-radius: 1.25rem !important;
+  background: rgb(var(--toy-chassis-tint)) !important;
+  box-shadow:
+    inset 0 0 0 2px rgba(255, 255, 255, 0.7),
+    0 4px 0 rgb(var(--bd) / 0.25),
+    0 6px 12px rgba(120, 53, 15, 0.10) !important;
+}
+[data-theme="toy"] [data-role="kanban-header"] {
+  background: linear-gradient(180deg, rgb(var(--toy-chassis-soft)) 0%, rgb(var(--toy-chassis)) 100%) !important;
+  /* No solid bottom border — the kanban column is rounded, and a hard
+     3px horizontal line cuts across the rounded shape awkwardly. The
+     gradient → white body bg change is plenty of visual separation,
+     and the inset bottom shadow gives a soft "shelf" effect that
+     doesn't visibly clash with the column's rounded corners. */
+  border-bottom: 0 !important;
+  border-radius: 1rem 1rem 0 0 !important;
+  box-shadow:
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.6),
+    inset 0 -2px 0 rgb(var(--bd) / 0.10) !important;
+}
+
+/* toy — CARDS as little game cartridges */
+[data-theme="toy"] [data-role="card"] {
+  border: 3px solid rgb(var(--bd) / 0.45) !important;
+  border-radius: 1rem !important;
+  background:
+    linear-gradient(180deg, rgb(255 255 255 / 0.7) 0%, transparent 30%),
+    #ffffff !important;
+  box-shadow:
+    inset 0 1.5px 0 rgb(255 255 255 / 1),
+    0 3px 0 rgb(var(--bd) / 0.22),
+    0 5px 12px rgba(120, 53, 15, 0.10) !important;
+}
+[data-theme="toy"] [data-role="card-highlight"] {
+  border: 3px solid rgb(var(--ac) / 0.65) !important;
+  box-shadow:
+    inset 0 1.5px 0 rgb(255 255 255 / 1),
+    0 4px 0 rgb(var(--ac-hi) / 0.40),
+    0 6px 16px rgb(var(--ac) / 0.25) !important;
+}
+
+/* toy — TASK CARDS as collectible character stickers */
+[data-theme="toy"] [data-role="task-card"] {
+  border: 3px solid rgb(var(--bd) / 0.40) !important;
+  border-radius: 1rem !important;
+  background:
+    linear-gradient(180deg, rgb(255 255 255 / 0.7) 0%, transparent 30%),
+    #ffffff !important;
+  box-shadow:
+    inset 0 1.5px 0 rgb(255 255 255 / 1),
+    0 3px 0 rgb(var(--bd) / 0.22),
+    0 5px 12px rgba(120, 53, 15, 0.10) !important;
+  transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.15s !important;
+}
+[data-theme="toy"] [data-role="task-card"]:hover {
+  transform: translateY(-3px) rotate(-0.3deg) !important;
+  box-shadow:
+    inset 0 1.5px 0 rgb(255 255 255 / 1),
+    0 6px 0 rgb(var(--ac) / 0.30),
+    0 10px 20px rgba(120, 53, 15, 0.18) !important;
+}
+
+/* toy — BUTTONS = chunky 3D game buttons */
+[data-theme="toy"] button {
+  transition: transform 0.10s ease-out, box-shadow 0.10s ease-out !important;
+}
+[data-theme="toy"] button:not([data-role="icon-btn"]):not([data-role^="sidebar-tab"]):not([data-role="primary-btn"]):not([data-role="color-swatch"]):not([data-role="row-btn"]):not([data-role="toggle"]) {
+  border-radius: 999px !important;
+  border: 2.5px solid rgb(var(--bd) / 0.55) !important;
+  background: linear-gradient(180deg, rgb(var(--toy-chassis-cream)) 0%, rgb(var(--toy-chassis-soft)) 100%) !important;
+  /* Negative spread on the solid drop tucks it inside the pill outline
+     so it stops reading as a horizontal brown stripe past the rounded
+     ends of the pill. */
+  box-shadow:
+    0 4px 0 -1.5px rgb(var(--bd) / 0.45),
+    0 6px 10px rgba(120, 53, 15, 0.18),
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.85) !important;
+  font-weight: 800 !important;
+  color: rgb(var(--t1)) !important;
+}
+[data-theme="toy"] button:not([data-role="icon-btn"]):not([data-role^="sidebar-tab"]):not([data-role="primary-btn"]):not([data-role="color-swatch"]):not([data-role="row-btn"]):not([data-role="toggle"]):hover {
+  transform: translateY(-1px) !important;
+  box-shadow:
+    0 5px 0 -1.5px rgb(var(--bd) / 0.55),
+    0 8px 14px rgba(120, 53, 15, 0.22),
+    inset 0 1.5px 0 rgba(255, 255, 255, 1) !important;
+}
+[data-theme="toy"] button:not([data-role="icon-btn"]):not([data-role^="sidebar-tab"]):not([data-role="primary-btn"]):not([data-role="color-swatch"]):not([data-role="row-btn"]):not([data-role="toggle"]):active {
+  transform: translateY(3px) !important;
+  box-shadow:
+    0 1px 0 -1.5px rgb(var(--bd) / 0.45),
+    0 2px 6px rgba(120, 53, 15, 0.15) !important;
+}
+
+/* toy — PRIMARY BUTTON = lamp-red action button */
+[data-theme="toy"] [data-role="primary-btn"] {
+  background: linear-gradient(180deg, rgb(var(--ac-lo)) 0%, rgb(var(--ac)) 50%, rgb(var(--ac-hi)) 100%) !important;
+  border: 2.5px solid rgb(var(--ac-hi)) !important;
+  border-radius: 999px !important;
+  box-shadow:
+    0 5px 0 rgb(var(--ac-hi) / 0.65),
+    0 9px 18px rgb(var(--ac) / 0.45),
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.45),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.18) !important;
+  color: #ffffff !important;
+  letter-spacing: 0.04em;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.20);
+}
+[data-theme="toy"] [data-role="primary-btn"]:hover {
+  transform: translateY(-2px) !important;
+  box-shadow:
+    0 7px 0 rgb(var(--ac-hi) / 0.75),
+    0 12px 22px rgb(var(--ac) / 0.55),
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.55) !important;
+}
+[data-theme="toy"] [data-role="primary-btn"]:active {
+  transform: translateY(4px) !important;
+  box-shadow:
+    0 1px 0 rgb(var(--ac-hi) / 0.55),
+    0 3px 8px rgb(var(--ac) / 0.30) !important;
+}
+
+/* toy — icon buttons = small round pads */
+[data-theme="toy"] [data-role="icon-btn"] {
+  border: 2px solid rgb(var(--bd) / 0.40) !important;
+  background: linear-gradient(180deg, rgb(var(--toy-chassis-cream)) 0%, rgb(var(--toy-chassis-soft)) 100%) !important;
+  box-shadow:
+    0 3px 0 rgb(var(--bd) / 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.85) !important;
+  border-radius: 999px !important;
+}
+[data-theme="toy"] [data-role="icon-btn"]:hover {
+  transform: translateY(-1px) !important;
+  box-shadow:
+    0 4px 0 rgb(var(--bd) / 0.45),
+    0 6px 10px rgba(120, 53, 15, 0.18) !important;
+}
+[data-theme="toy"] [data-role="icon-btn"]:active {
+  transform: translateY(2px) !important;
+}
+
+/* Segmented control (자동/1/2/3/4 column selector): in themed modes the
+   wrapper container's bg + border are removed (the buttons stand alone),
+   each button gets the theme's chunky pill / bevel treatment from the
+   blanket, and the active option gets a saturated highlight. */
+[data-theme="toy"] [data-role="segmented-group"],
+[data-theme="kitsch"] [data-role="segmented-group"],
+[data-theme="candy"] [data-role="segmented-group"],
+[data-theme="win98"] [data-role="segmented-group"] {
+  background: transparent !important;
+  border: 0 !important;
+  padding: 0 !important;
+}
+/* Active segment override — wins over the blanket's cream/yellow
+   gradient bg so the user can see which option is selected. */
+[data-theme="toy"] [data-role="segmented-btn"][data-active="true"] {
+  background: rgb(var(--toy-chassis)) !important;
+  color: rgb(var(--t1)) !important;
+}
+[data-theme="kitsch"] [data-role="segmented-btn"][data-active="true"] {
+  background: rgb(var(--ac)) !important;
+  color: #ffffff !important;
+}
+/* Candy active segment: the pastel pink accent (#ff8ac0) is too light
+   to carry white text — contrast drops to ~1.9:1, the label nearly
+   disappears. Use the deep pastel-navy --t1 instead, which lands
+   around 4:1 on the pink and is reinforced by the bold font weight. */
+[data-theme="candy"] [data-role="segmented-btn"][data-active="true"] {
+  background: rgb(var(--ac)) !important;
+  color: rgb(var(--t1)) !important;
+}
+/* Win98 active segment: pressed-in bevel (inverted shadows) + bold so
+   the selected option reads as a "down" button in the classic style. */
+[data-theme="win98"] [data-role="segmented-btn"][data-active="true"] {
+  font-weight: bold !important;
+  color: #000080 !important;
+  box-shadow:
+    inset 1px 1px 0 #404040,
+    inset -1px -1px 0 #ffffff,
+    inset 2px 2px 0 #808080,
+    inset -2px -2px 0 #dfdfdf !important;
+}
+
+/* Status pill (완료 N개 chip etc.): bump the 1px Tailwind outline to
+   match the chunky borders on adjacent action buttons across all
+   themed modes. Toy = 2.5px (matches buttons), kitsch/candy = 2px.
+   The segmented-group container is intentionally invisible (handled
+   above) so it's not included here. */
+[data-theme="toy"] [data-role="status-pill"] {
+  border-width: 2.5px !important;
+  border-color: rgb(var(--bd) / 0.35) !important;
+}
+[data-theme="kitsch"] [data-role="status-pill"],
+[data-theme="candy"] [data-role="status-pill"] {
+  border-width: 2px !important;
+}
+
+/* row-toggle buttons (history items, filter bar, quick-assign header,
+   etc.): they sit inside a small card container that supplies its own
+   border and bg. The chunky 3D pill rule across kitsch/candy/toy would
+   otherwise turn each row into its own plastic pill and the solid drop
+   shadow would bleed past the rounded button as a visible stripe (and
+   the rectangular gap between pill and container as a white line).
+   Flatten them entirely across all three themed modes. */
+[data-theme="toy"] [data-role="row-btn"],
+[data-theme="toy"] [data-role="row-btn"]:hover,
+[data-theme="toy"] [data-role="row-btn"]:active,
+[data-theme="candy"] [data-role="row-btn"],
+[data-theme="candy"] [data-role="row-btn"]:hover,
+[data-theme="candy"] [data-role="row-btn"]:active,
+[data-theme="kitsch"] [data-role="row-btn"],
+[data-theme="kitsch"] [data-role="row-btn"]:hover,
+[data-theme="kitsch"] [data-role="row-btn"]:active {
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  transform: none !important;
+  font-weight: 700 !important;
+}
+
+/* toy — the wrapper around a row-btn is the visible "card". Tailwind's
+   default 1px border looks anemic next to the chunky 3px borders on
+   columns/cards elsewhere, so bump it up so the container reads as
+   part of the toy aesthetic. */
+[data-theme="toy"] :is(li, div):has(> [data-role="row-btn"]):not([data-role="quick-assign"]) {
+  border-width: 3px !important;
+  border-color: rgb(var(--bd) / 0.40) !important;
+  border-radius: 1rem !important;
+  box-shadow:
+    inset 0 1.5px 0 rgb(255 255 255 / 0.7),
+    0 2px 0 rgb(var(--bd) / 0.18) !important;
+}
+
+/* toy — quick-assign drawer specifically: same chunky rounded "card"
+   look as the row-btn wrappers above, but the 3px frame is drawn via
+   a positioned ::after pseudo with box-sizing: border-box. This gives
+   the dashed border the SAME outer corner radius as the parent (1rem),
+   without adding any layout height — drawer total stays h-12 button
+   (48px) + Tailwind border-b (1px) = 49px, lined up with the sidebar
+   tab strips. (outline + outline-offset: -3px curved at 1rem - 3px
+   which produced a visible corner mismatch against the parent's
+   1rem edge — pseudo-element + inherit border-radius fixes that.) */
+[data-theme="toy"] [data-role="quick-assign"]:has(> [data-role="row-btn"]) {
+  position: relative !important;
+  /* Mobile default: 1rem (subtle rounded card, lets the drawer read
+     as a wide rectangle on phones). Desktop wide-center jumps to
+     1.5rem; desktop narrow-center steps back down (rules below). */
+  border-radius: 1rem !important;
+  box-shadow: inset 0 1.5px 0 rgb(255 255 255 / 0.7) !important;
+}
+[data-theme="toy"] [data-role="quick-assign"]:has(> [data-role="row-btn"])::after {
+  content: "" !important;
+  position: absolute !important;
+  inset: 0 !important;
+  border: 3px dashed rgb(var(--bd) / 0.40) !important;
+  border-radius: inherit !important;
+  box-sizing: border-box !important;
+  pointer-events: none !important;
+}
+
+/* Make the center column its own inline-size container so the
+   quick-assign drawer's radius can adapt as the column shrinks.
+   Mobile (< md viewport, sidebar-as-drawer): keep the base 1rem.
+   Desktop (≥ md): bump to 1.5rem on a wide center, step back down to
+   1rem / 0.75rem when sidebars eat the center's width so the 49px
+   tall drawer doesn't morph into a fully-rounded oblong pill. */
+:has(> [data-role="quick-assign"]) {
+  container-type: inline-size;
+  container-name: center-col;
+}
+@media (min-width: 768px) {
+  [data-theme="toy"] [data-role="quick-assign"]:has(> [data-role="row-btn"]) {
+    border-radius: 1.5rem !important;
+  }
+  @container center-col (max-width: 480px) {
+    [data-theme="toy"] [data-role="quick-assign"]:has(> [data-role="row-btn"]) {
+      border-radius: 1rem !important;
+    }
+  }
+  @container center-col (max-width: 320px) {
+    [data-theme="toy"] [data-role="quick-assign"]:has(> [data-role="row-btn"]) {
+      border-radius: 0.75rem !important;
+    }
+  }
+}
+
+/* toy — section count chip: opt into the chunky toy palette so the
+   small N-tasks pill on each column header reads as part of the toy
+   aesthetic. Soft chassis bg + brown rim + inset highlight matches
+   the cards / columns nearby. */
+[data-theme="toy"] [data-role="section-count"] {
+  background: rgb(var(--toy-chassis-soft)) !important;
+  border: 1.5px solid rgb(var(--bd) / 0.40) !important;
+  color: rgb(var(--t1)) !important;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.60) !important;
+}
+
+/* toy — task-card bookmark toggle (still an icon-btn so the chunky
+   cream pad shape matches the X button next to it). When marked, paint
+   only the icon with a saturated chassis tone so the bookmark blends
+   into the toy palette instead of jumping to the lamp-red accent. The
+   icon SVG inherits stroke/fill via currentColor, so swapping the text
+   colour is enough — no bg/border change, button shape preserved. */
+[data-theme="toy"] [data-role="icon-btn"][data-variant="bookmark-toggle"][aria-pressed="true"] {
+  color: rgb(var(--toy-chassis-deep)) !important;
+}
+
+/* toy — marker filter button (bookmark filter etc.): active state
+   uses the saturated chassis color so it reads as "pressed and tinted
+   the same as the chassis", instead of the blanket's cream/yellow
+   gradient that would otherwise wash out the Tailwind bg-ac/15
+   active-state hint. Inactive state still falls through to the toy
+   button blanket for a chunky 3D look. */
+[data-theme="toy"] [data-role="marker-filter"][aria-pressed="true"] {
+  background: rgb(var(--toy-chassis)) !important;
+  border-color: rgb(var(--toy-chassis-deep)) !important;
+  color: rgb(var(--t1)) !important;
+}
+[data-theme="toy"] [data-role="marker-filter"][aria-pressed="true"]:hover {
+  background: rgb(var(--toy-chassis-deep)) !important;
+}
+
+/* toy — Toggle switch ON uses a saturated chassis tint so it reads
+   as part of the toy palette instead of the lamp-red accent (and not
+   the cream/yellow gradient that the blanket would otherwise paint
+   on top of Tailwind's bg-ac). Border picks up the deep chassis tone
+   for a small rim, knob stays cream-white so it pops on top. */
+[data-theme="toy"] [data-role="toggle"] {
+  transition: background-color 0.15s ease, border-color 0.15s ease !important;
+}
+[data-theme="toy"] [data-role="toggle"][data-on="true"] {
+  background: rgb(var(--toy-chassis)) !important;
+  border-color: rgb(var(--toy-chassis-deep)) !important;
+}
+[data-theme="toy"] [data-role="toggle"][data-on="true"] [data-role="toggle-knob"] {
+  background: rgb(var(--toy-chassis-cream)) !important;
+}
+[data-theme="toy"] [data-role="toggle"][data-on="false"] {
+  background: rgb(var(--bd) / 0.18) !important;
+  border-color: rgb(var(--bd) / 0.35) !important;
+}
+
+/* toy — status badges (재요청됨 / 승인됨 / 검토 중): bump the
+   default 1px Tailwind border to 2px and add a small inset highlight
+   so the pill reads with the same chunky-toy feel as columns/cards
+   instead of looking flat next to them. Keeps each badge's per-status
+   border *color* so approved-vs-rejected distinction is preserved. */
+[data-theme="toy"] [data-role="status-badge"] {
+  border-width: 2px !important;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.55) !important;
+  font-weight: 800 !important;
+}
+
+/* toy — STAT CHIPS = HUD pixel-pills */
+[data-theme="toy"] [data-role="stat-chip"] {
+  border-radius: 999px !important;
+  border-width: 2.5px !important;
+  font-weight: 900 !important;
+  background: rgba(255, 255, 255, 0.6) !important;
+  box-shadow:
+    0 2px 0 rgb(var(--bd) / 0.20),
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.8) !important;
+}
+
+/* toy — sidebar tabs */
+[data-theme="toy"] [data-role^="sidebar-tab"] {
+  border-radius: 0 !important;
+  font-weight: 800 !important;
+}
+[data-theme="toy"] [data-role="sidebar-tab-active"] {
+  background: linear-gradient(180deg, rgb(var(--ac) / 0.10) 0%, rgb(var(--ac) / 0.20) 100%) !important;
+  border-bottom: 3px solid rgb(var(--ac)) !important;
+  color: rgb(var(--ac-hi)) !important;
+}
+
+/* toy — tags as printed labels */
+[data-theme="toy"] [data-role="tag"] {
+  background: linear-gradient(180deg, rgb(var(--ac) / 0.08) 0%, rgb(var(--ac) / 0.18) 100%) !important;
+  border: 2px solid rgb(var(--ac) / 0.40) !important;
+  color: rgb(var(--ac-hi)) !important;
+  font-weight: 800;
+  border-radius: 999px !important;
+  box-shadow:
+    0 1.5px 0 rgb(var(--ac-hi) / 0.30),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5) !important;
+}
+
+/* toy — count badge = score number */
+[data-theme="toy"] [data-role="count-badge"] {
+  background: linear-gradient(180deg, rgb(var(--ac) / 0.10) 0%, rgb(var(--ac) / 0.22) 100%) !important;
+  color: rgb(var(--ac-hi)) !important;
+  border: 2px solid rgb(var(--ac) / 0.45) !important;
+  border-radius: 999px !important;
+  font-weight: 900 !important;
+}
+
+/* toy — color swatches keep inline color, candy-bubble look */
+[data-theme="toy"] [data-role="color-swatch"] {
+  border-radius: 999px !important;
+  border: 2.5px solid rgb(var(--bd) / 0.55) !important;
+  box-shadow:
+    0 2px 0 rgb(var(--bd) / 0.35),
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.45),
+    inset 0 -1.5px 0 rgba(0, 0, 0, 0.10) !important;
+}
+
+/* toy — inputs = inset LCD screens.
+   Checkbox/radio excluded — heavy LCD-style border + rounding crops the
+   browser-drawn check glyph at the top edge. */
+[data-theme="toy"] input:not([type="color"]):not([type="range"]):not([type="number"]):not([type="checkbox"]):not([type="radio"]),
+[data-theme="toy"] select,
+[data-theme="toy"] textarea {
+  border: 2.5px solid rgb(var(--bd) / 0.40) !important;
+  border-radius: 0.75rem !important;
+  background-color: #fffef0 !important;
+  box-shadow:
+    inset 0 2.5px 5px rgba(120, 53, 15, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95) !important;
+  color: rgb(var(--t1)) !important;
+}
+[data-theme="toy"] input:not([type="color"]):not([type="range"]):not([type="number"]):not([type="checkbox"]):not([type="radio"]):focus,
+[data-theme="toy"] select:focus,
+[data-theme="toy"] textarea:focus {
+  border-color: rgb(var(--ac) / 0.65) !important;
+  box-shadow:
+    inset 0 2.5px 5px rgba(120, 53, 15, 0.10),
+    0 0 0 3px rgb(var(--ac) / 0.20) !important;
+  outline: none !important;
+}
+
+/* toy — bump every Tailwind 1px outline up to 2px so card-like surfaces
+   (inbox filter, settings panels, modal info rows, etc.) read with the
+   same chunky weight as kanban columns / cards / buttons. Form fields
+   and buttons already have their own (heavier) toy rules with higher
+   specificity, so they keep their own thickness. Directional border
+   utilities (.border-t/r/b/l) are intentional dividers — leave alone. */
+[data-theme="toy"] .border {
+  border-width: 2px !important;
+}
+
+/* toy — scrollbar */
+[data-theme="toy"] ::-webkit-scrollbar-thumb {
+  background: rgb(var(--bd) / 0.55) !important;
+  border-radius: 999px !important;
+}
+[data-theme="toy"] ::-webkit-scrollbar-thumb:hover {
+  background: rgb(var(--bd) / 0.80) !important;
+}
+
+/* toy — character mascot animations */
+@keyframes toy-bounce {
+  0%, 100% { transform: translateY(0) rotate(-2deg); }
+  50%      { transform: translateY(-9px) rotate(3deg); }
+}
+@keyframes toy-bounce-alt {
+  0%, 100% { transform: translateY(0) rotate(2deg); }
+  50%      { transform: translateY(-7px) rotate(-3deg); }
+}
+@keyframes toy-twinkle {
+  0%, 100% { transform: rotate(0deg) scale(1); opacity: 0.95; }
+  50%      { transform: rotate(20deg) scale(1.15); opacity: 1; }
+}
+@keyframes toy-lamp-pulse {
+  0%, 100% { filter: drop-shadow(0 4px 8px rgba(120, 53, 15, 0.30))
+                     drop-shadow(0 0 6px rgba(253, 224, 71, 0.4)); }
+  50%      { filter: drop-shadow(0 4px 8px rgba(120, 53, 15, 0.30))
+                     drop-shadow(0 0 14px rgba(253, 224, 71, 0.85)); }
+}
+.toy-mascot {
+  filter: drop-shadow(0 4px 8px rgba(120, 53, 15, 0.30));
+}
+.toy-mascot-pacman {
+  animation: toy-bounce 2.6s ease-in-out infinite,
+             toy-lamp-pulse 1.6s ease-in-out infinite;
+}
+.toy-mascot-bear {
+  animation: toy-bounce-alt 2.8s ease-in-out infinite;
+  animation-delay: 0.3s;
+}
+.toy-mascot-star {
+  animation: toy-twinkle 2.2s ease-in-out infinite;
+}
+
+/* Mobile: shrink mascots, hide star to avoid topbar collision */
+@media (max-width: 768px) {
+  .toy-mascot-pacman svg { width: 56px; height: 56px; }
+  .toy-mascot-bear svg    { width: 48px; height: 48px; }
+  .toy-mascot-star       { display: none !important; }
+  /* Slimmer chassis margin so screen has more room */
+  [data-theme="toy"] [data-role="board-shell"] {
+    margin: 0.5rem !important;
+    border-width: 4px !important;
+    border-radius: 1.25rem !important;
+  }
+  /* Mini-card mode on toy: chassis frame steals ~24px of horizontal
+     room that a 4-column dense board can't afford on a 360px phone.
+     Drop margin to 0 and border to 3px (saves 18px), and tighten the
+     inner kanban-board padding so the grid + gaps fit cleanly. */
+  [data-theme="toy"] [data-role="kanban-board"][data-mini-cards="true"] {
+    padding-left: 0.375rem !important;
+    padding-right: 0.375rem !important;
+  }
+  [data-theme="toy"]:has([data-role="kanban-board"][data-mini-cards="true"]) [data-role="board-shell"] {
+    margin: 0 !important;
+    border-width: 3px !important;
+    border-radius: 0.875rem !important;
+  }
+}
+
+/* ─────────────────────────────────────────────────
+   WIN98 — Microsoft Windows 98 / pixel-art aesthetic
+   silver panels, navy title bars, 3D bevel buttons,
+   teal-dot desktop wallpaper, hard square corners
+───────────────────────────────────────────────── */
+[data-theme="win98"] {
+  --base:    0 128 128;
+  --s1:    192 192 192;
+  --s2:    255 255 255;
+  --s3:    223 223 223;
+  --bd:    128 128 128;
+  --t1:      0   0   0;
+  --t2:     64  64  64;
+  --t3:    128 128 128;
+  --ac:      0   0 128;
+  --ac-lo:  16  84 198;
+  --ac-hi:   0   0  64;
+  --c-ok:    0 128   0;
+  --c-warn: 178 134   0;
+  --c-err:  128   0   0;
+  color-scheme: light;
+}
+
+/* Page bg = teal desktop with classic 1px-dot wallpaper */
+[data-theme="win98"] {
+  background-color: rgb(0, 128, 128) !important;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.10) 1px, transparent 1px) !important;
+  background-size: 4px 4px !important;
+  font-family: "Tahoma", "MS Sans Serif", "Verdana", sans-serif !important;
+  -webkit-font-smoothing: none;
+  font-smooth: never;
+}
+
+/* Crisp pixelated SVG rendering */
+[data-theme="win98"] svg {
+  shape-rendering: crispEdges;
+}
+
+/* Hard square corners — kill all rounded corners */
+[data-theme="win98"] [data-role="topbar"],
+[data-theme="win98"] [data-role="left-sidebar"],
+[data-theme="win98"] [data-role="right-sidebar"],
+[data-theme="win98"] [data-role="kanban-col"],
+[data-theme="win98"] [data-role="kanban-header"],
+[data-theme="win98"] [data-role="card"],
+[data-theme="win98"] [data-role="card-highlight"],
+[data-theme="win98"] [data-role="task-card"],
+[data-theme="win98"] [data-role="primary-btn"],
+[data-theme="win98"] [data-role="icon-btn"],
+[data-theme="win98"] [data-role="stat-chip"],
+[data-theme="win98"] [data-role="tag"],
+[data-theme="win98"] [data-role="count-badge"],
+[data-theme="win98"] button,
+[data-theme="win98"] input:not([type="color"]),
+[data-theme="win98"] select,
+[data-theme="win98"] textarea {
+  border-radius: 0 !important;
+}
+
+/* win98 — kill every Tailwind rounded-* utility class. The theme is
+   built around square chrome (raised bevels, sunken bezels); any
+   stray rounded-xl / rounded-md / rounded-full from a component
+   would visually disagree with the rest of the dialog and read as
+   a Mac element parked inside a Win98 window. The attribute
+   selector matches `rounded`, `rounded-md`, `rounded-xl`, etc.
+   Avatar circles, indicator dots, etc. that genuinely want a circle
+   should be a sibling concern — at the moment we have none in the
+   modal/dialog tree that need to stay round under win98. */
+[data-theme="win98"] [class*="rounded"] {
+  border-radius: 0 !important;
+}
+
+/* win98 — modal-field is the sunken input bezel applied to the
+   input + the URI/Secret display boxes on the TOTP modal so they
+   all read as standard Win98 form fields rather than rounded
+   cards. Mirrors the [data-theme="win98"] input rule below. */
+[data-theme="win98"] [data-role="modal-field"] {
+  background: #ffffff !important;
+  color: #000000 !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow:
+    inset 1px 1px 0 #808080,
+    inset -1px -1px 0 #ffffff,
+    inset 2px 2px 0 #404040,
+    inset -2px -2px 0 #dfdfdf !important;
+}
+
+/* Topbar = Windows title bar (navy → light blue gradient + white bold) */
+[data-theme="win98"] [data-role="topbar"] {
+  background: linear-gradient(90deg, #000080 0%, #1084d0 100%) !important;
+  color: #ffffff !important;
+  border: none !important;
+  border-bottom: 2px solid #404040 !important;
+  box-shadow:
+    inset 1px 1px 0 #4080ff,
+    inset -1px -1px 0 #000040 !important;
+  height: 3.5rem !important;
+}
+[data-theme="win98"] [data-role="topbar"] .text-t1,
+[data-theme="win98"] [data-role="topbar"] .text-t2,
+[data-theme="win98"] [data-role="topbar"] .text-t3 {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+/* Brand "G" = software icon (raised 3D silver tile) */
+[data-theme="win98"] [data-role="topbar"] > button:first-of-type > div:first-child {
+  background: #c0c0c0 !important;
+  color: #000080 !important;
+  border-radius: 0 !important;
+  font-family: "Tahoma", monospace !important;
+  font-weight: bold !important;
+  box-shadow:
+    inset 1px 1px 0 #ffffff,
+    inset -1px -1px 0 #404040,
+    inset 2px 2px 0 #dfdfdf,
+    inset -2px -2px 0 #808080 !important;
+}
+
+/* Sidebars = silver window panels with raised bevel */
+[data-theme="win98"] [data-role="left-sidebar"] {
+  background: #c0c0c0 !important;
+  border: none !important;
+  border-right: 2px solid #404040 !important;
+  box-shadow:
+    inset 1px 1px 0 #ffffff,
+    inset -1px 0 0 #808080 !important;
+}
+[data-theme="win98"] [data-role="right-sidebar"] {
+  background: #c0c0c0 !important;
+  border: none !important;
+  border-left: 2px solid #404040 !important;
+  box-shadow:
+    inset -1px 1px 0 #ffffff,
+    inset 1px 0 0 #808080 !important;
+}
+
+/* Quick assign drawer */
+[data-theme="win98"] [data-role="quick-assign"] {
+  background: #c0c0c0 !important;
+  border-bottom: 2px solid #404040 !important;
+  box-shadow:
+    inset 1px 1px 0 #ffffff,
+    inset -1px -1px 0 #808080 !important;
+}
+
+/* Kanban column = Win98 window frame (silver raised, thin proper bevel) */
+[data-theme="win98"] [data-role="kanban-col"] {
+  background: #c0c0c0 !important;
+  border: none !important;
+  /* Classic Win98 raised window: 2-tone bevel, NO drop shadow */
+  box-shadow:
+    inset 1px 1px 0 #ffffff,
+    inset -1px -1px 0 #404040,
+    inset 2px 2px 0 #dfdfdf,
+    inset -2px -2px 0 #808080 !important;
+  padding: 3px !important;
+  overflow: hidden !important;
+}
+
+/* Header = title bar (navy gradient, sits flush inside frame) */
+[data-theme="win98"] [data-role="kanban-header"] {
+  background: linear-gradient(90deg, #000080 0%, #1084d0 100%) !important;
+  color: #ffffff !important;
+  border: none !important;
+  font-weight: bold !important;
+  padding: 3px 6px !important;
+  margin: 0 !important;
+}
+[data-theme="win98"] [data-role="kanban-header"] h3,
+[data-theme="win98"] [data-role="kanban-header"] .text-t1,
+[data-theme="win98"] [data-role="kanban-header"] .text-t2,
+[data-theme="win98"] [data-role="kanban-header"] .text-t3 {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+/* Section count chip: the force-white rule above pushes white text onto
+   every .text-t* inside the navy header, including the count chip
+   (which carries .text-t2 from Tailwind), so the number renders as
+   white-on-white inside the chip. Restore navy text on a clean white
+   well — placed *after* the force-white rule so cascade order wins.
+   Height is sized to match the adjacent ^/X icon-btn squares so the
+   chip + buttons share a baseline. */
+[data-theme="win98"] [data-role="kanban-header"] [data-role="section-count"] {
+  /* Sunken inset look matching Win98 input fields — same 4-layer
+     inset bevel the global input rule uses, so the chip reads as a
+     small read-only number field instead of a flat pill. */
+  background: #ffffff !important;
+  color: #000080 !important;
+  -webkit-text-fill-color: #000080 !important;
+  border: none !important;
+  border-radius: 0 !important;
+  font-weight: bold !important;
+  height: 22px !important;
+  min-height: 22px !important;
+  padding: 0 6px !important;
+  line-height: 1 !important;
+  box-shadow:
+    inset 1px 1px 0 #808080,
+    inset -1px -1px 0 #ffffff,
+    inset 2px 2px 0 #404040,
+    inset -2px -2px 0 #dfdfdf !important;
+}
+
+/* Body = sunken white content area (real Win98 file-explorer feel) */
+[data-theme="win98"] [data-role="kanban-body"] {
+  background: #ffffff !important;
+  margin-top: 2px !important;
+  /* Sunken inset (opposite of frame) */
+  box-shadow:
+    inset 1px 1px 0 #404040,
+    inset -1px -1px 0 #dfdfdf,
+    inset 2px 2px 0 #808080,
+    inset -2px -2px 0 #ffffff !important;
+}
+
+/* Cards inside body = simple list items with thin border (no heavy bevel) */
+[data-theme="win98"] [data-role="task-card"] {
+  background: #ffffff !important;
+  border: 1px solid #808080 !important;
+  box-shadow: 1px 1px 0 #404040 !important;
+  transform: none !important;
+  transition: none !important;
+}
+[data-theme="win98"] [data-role="task-card"]:hover {
+  background: #d8e4f8 !important;
+  border-color: #000080 !important;
+  transform: none !important;
+}
+
+/* Generic cards (inbox, vault) keep the sunken inset look */
+[data-theme="win98"] [data-role="card"] {
+  background: #ffffff !important;
+  border: none !important;
+  box-shadow:
+    inset 1px 1px 0 #404040,
+    inset -1px -1px 0 #ffffff,
+    inset 2px 2px 0 #808080,
+    inset -2px -2px 0 #dfdfdf !important;
+}
+[data-theme="win98"] [data-role="card-highlight"] {
+  background: #ffffe1 !important;
+  box-shadow:
+    inset 1px 1px 0 #806000,
+    inset -1px -1px 0 #ffffff,
+    inset 2px 2px 0 #c0a000,
+    inset -2px -2px 0 #ffff80 !important;
+}
+
+/* Buttons = classic raised 3D bevel */
+[data-theme="win98"] button:not([data-role^="sidebar-tab"]):not([data-role="color-swatch"]) {
+  background: #c0c0c0 !important;
+  border: none !important;
+  color: #000000 !important;
+  font-weight: normal !important;
+  letter-spacing: 0 !important;
+  text-shadow: none !important;
+  box-shadow:
+    inset 1px 1px 0 #ffffff,
+    inset -1px -1px 0 #404040,
+    inset 2px 2px 0 #dfdfdf,
+    inset -2px -2px 0 #808080 !important;
+  transform: none !important;
+  transition: none !important;
+}
+[data-theme="win98"] button:not([data-role^="sidebar-tab"]):not([data-role="color-swatch"]):hover {
+  background: #d4d4d4 !important;
+}
+[data-theme="win98"] button:not([data-role^="sidebar-tab"]):not([data-role="color-swatch"]):active {
+  box-shadow:
+    inset 1px 1px 0 #404040,
+    inset -1px -1px 0 #ffffff,
+    inset 2px 2px 0 #808080,
+    inset -2px -2px 0 #dfdfdf !important;
+  transform: none !important;
+}
+
+/* Primary button = same bevel + bold */
+[data-theme="win98"] [data-role="primary-btn"] {
+  font-weight: bold !important;
+}
+
+/* Icon buttons */
+[data-theme="win98"] [data-role="icon-btn"] {
+  background: #c0c0c0 !important;
+  border: none !important;
+  box-shadow:
+    inset 1px 1px 0 #ffffff,
+    inset -1px -1px 0 #404040,
+    inset 2px 2px 0 #dfdfdf,
+    inset -2px -2px 0 #808080 !important;
+}
+
+/* Inputs = sunken white field */
+[data-theme="win98"] input:not([type="color"]):not([type="range"]):not([type="number"]),
+[data-theme="win98"] textarea,
+[data-theme="win98"] select:not([multiple]) {
+  background-color: #ffffff !important;
+  border: none !important;
+  color: #000000 !important;
+  -webkit-text-fill-color: #000000 !important;
+  box-shadow:
+    inset 1px 1px 0 #808080,
+    inset -1px -1px 0 #ffffff,
+    inset 2px 2px 0 #404040,
+    inset -2px -2px 0 #dfdfdf !important;
+  font-family: "Tahoma", monospace !important;
+  /* Padding intentionally NOT overridden — Tailwind utility classes
+     (pl-9 for icon-prefixed search inputs etc.) must keep working */
+  /* Restore the native chevron — the chunky raised-bezel widget look
+     this theme is built around includes the OS dropdown arrow. */
+  appearance: auto !important;
+  -webkit-appearance: auto !important;
+  background-image: none !important;
+  padding-right: revert !important;
+}
+[data-theme="win98"] input:not([type="color"]):focus,
+[data-theme="win98"] textarea:focus,
+[data-theme="win98"] select:focus {
+  outline: 1px dotted #000000 !important;
+  outline-offset: -3px !important;
+}
+
+/* Stat chips = system tray pixel buttons */
+[data-theme="win98"] [data-role="stat-chip"] {
+  background: #c0c0c0 !important;
+  border: none !important;
+  box-shadow:
+    inset 1px 1px 0 #404040,
+    inset -1px -1px 0 #ffffff,
+    inset 2px 2px 0 #808080,
+    inset -2px -2px 0 #dfdfdf !important;
+  font-weight: bold !important;
+  color: #000000 !important;
+}
+
+/* Tags = pixel labels */
+[data-theme="win98"] [data-role="tag"] {
+  background: #c0c0c0 !important;
+  color: #000000 !important;
+  border: 1px solid #404040 !important;
+  border-radius: 0 !important;
+  font-weight: bold !important;
+  box-shadow: none !important;
+}
+
+/* Execution badge (완료 / 실행중 / 대기 / 재요청중): pixel label with
+   sharp corners and a navy/black palette so it sits in the win98
+   aesthetic next to the Tag chips. Status accent color comes through
+   the existing Tailwind border/text classes so completed/active/etc.
+   still read distinctively. */
+[data-theme="win98"] [data-role="exec-badge"] {
+  background: #c0c0c0 !important;
+  color: #000000 !important;
+  border: 1px solid #404040 !important;
+  border-radius: 0 !important;
+  font-weight: bold !important;
+  box-shadow: none !important;
+}
+
+/* Count badge = white well */
+[data-theme="win98"] [data-role="count-badge"] {
+  background: #ffffff !important;
+  color: #000080 !important;
+  border: 1px solid #404040 !important;
+  font-weight: bold !important;
+  box-shadow: none !important;
+}
+
+/* Status pill (완료 N개): pixel-label style with a hairline frame so
+   it reads as a system-tray info chip instead of a Tailwind pill. */
+[data-theme="win98"] [data-role="status-pill"] {
+  background: #c0c0c0 !important;
+  color: #000000 !important;
+  border: 1px solid #404040 !important;
+  border-radius: 0 !important;
+  font-weight: bold !important;
+  box-shadow: none !important;
+}
+
+/* Pipeline stages (받은함 / 팀 배정 / 에이전트 / 실행 / 리포트): each
+   step renders as a small flat pixel-label rather than a Tailwind pill,
+   matching the Windows status-bar aesthetic used elsewhere. */
+[data-theme="win98"] [data-role="pipeline-stage"] {
+  background: #c0c0c0 !important;
+  color: #000000 !important;
+  border: 1px solid #404040 !important;
+  border-radius: 0 !important;
+  font-weight: normal !important;
+  box-shadow: none !important;
+}
+
+/* Form panel (이미지 첨부 옵션 박스 등): Tailwind defaults render this
+   as a rounded white card, but win98 calls for a raised classic-style
+   panel matching the buttons next to it. Same beveled #c0c0c0 surface
+   the buttons use so the form sits inside a coherent Windows group. */
+[data-theme="win98"] [data-role="form-panel"] {
+  background: #c0c0c0 !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow:
+    inset 1px 1px 0 #ffffff,
+    inset -1px -1px 0 #404040,
+    inset 2px 2px 0 #dfdfdf,
+    inset -2px -2px 0 #808080 !important;
+}
+
+/* Win98 ConfirmToast: render the rounded animated card as a classic
+   Windows dialog — sharp corners, raised bevel frame, #c0c0c0 body,
+   inline navy title bar with white bold text, and the message left-
+   aligned next to a system-style icon. The toast keeps the same
+   DOM structure across themes; CSS reshapes the visuals only here. */
+[data-theme="win98"] [data-role="confirm-toast"] {
+  border: none !important;
+  border-radius: 0 !important;
+  background: #c0c0c0 !important;
+  padding: 0 !important;
+  /* Suppress the springy cubic-bezier entry animation — Win98 dialogs
+     pop instantly. */
+  animation: none !important;
+  box-shadow:
+    inset 2px 2px 0 #ffffff,
+    inset -2px -2px 0 #404040,
+    inset 4px 4px 0 #dfdfdf,
+    inset -4px -4px 0 #808080,
+    2px 2px 0 #000000 !important;
+  /* Drop the colored accent ring Tailwind applied. */
+  --tw-ring-color: transparent !important;
+  --tw-ring-offset-shadow: 0 0 #0000 !important;
+  --tw-ring-shadow: 0 0 #0000 !important;
+  font-family: "Tahoma", "MS Sans Serif", sans-serif !important;
+}
+/* Hide the centered icon / sparkle row — Win98 dialogs put the icon
+   inline next to the message, not floating above the title. */
+[data-theme="win98"] [data-role="confirm-toast"] > div:first-of-type {
+  display: none !important;
+}
+/* h3 becomes the title bar: full-width navy gradient, white bold text,
+   left-aligned to match Windows title bars, with the close [X] button
+   docked to the right inside the bar. Vertical padding is generous
+   enough to fit the 22px square close button (matches kanban X). */
+[data-theme="win98"] [data-role="confirm-toast"] h3 {
+  position: relative !important;
+  margin: 4px 4px 0 4px !important;
+  padding: 2px 22px 2px 6px !important;
+  display: flex !important;
+  align-items: center !important;
+  background: linear-gradient(90deg, #000080 0%, #1084d0 100%) !important;
+  color: #ffffff !important;
+  font-weight: bold !important;
+  font-size: 12px !important;
+  line-height: 16px !important;
+  text-align: left !important;
+  letter-spacing: 0 !important;
+}
+
+/* Title-bar close X button: hidden in every theme by default, only
+   the win98 dialog promotes it to the visible top-right [×] hit. */
+[data-role="dialog-close-x"] {
+  display: none;
+}
+/* win98 owns the title-bar X for ConfirmToast via dialog-close-x. The
+   ModalCloseButton (data-role="modal-close") inside a confirm-toast
+   would stack as a second X — hide it there.
+   For every other modal (data-role="modal-window") the ModalCloseButton
+   is the ONLY close affordance, so we promote it to the chunky title-
+   bar X style instead of hiding it. */
+[data-theme="win98"] [data-role="confirm-toast"] [data-role="modal-close"] {
+  display: none !important;
+}
+[data-theme="win98"] [data-role="modal-window"] [data-role="modal-close"] {
+  /* Repaint the modern span-button as a Win98 raised-bezel square.
+     The original Windows 98 title-bar X is 16×14, but stacked next
+     to the new larger kanban-style close X in other themes that
+     looked tiny in side-by-side comparison ("콩알만하다"), so we
+     scale up to 26×22 while keeping the bezel proportions. Big
+     enough to tap easily, still recognizable as a 98 title-bar X. */
+  display: inline-flex !important;
+  position: absolute !important;
+  top: 4px !important;
+  right: 4px !important;
+  width: 26px !important;
+  height: 22px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: #c0c0c0 !important;
+  color: #000000 !important;
+  border: none !important;
+  border-radius: 0 !important;
+  z-index: 2 !important;
+  box-shadow:
+    inset 1px 1px 0 #ffffff,
+    inset -1px -1px 0 #404040,
+    inset 2px 2px 0 #dfdfdf,
+    inset -2px -2px 0 #808080 !important;
+}
+[data-theme="win98"] [data-role="modal-window"] [data-role="modal-close"]:active {
+  box-shadow:
+    inset 1px 1px 0 #404040,
+    inset -1px -1px 0 #ffffff,
+    inset 2px 2px 0 #808080,
+    inset -2px -2px 0 #dfdfdf !important;
+}
+[data-theme="win98"] [data-role="modal-window"] [data-role="modal-close"] svg {
+  /* Bumped from 8px → 12px to match the larger button. */
+  width: 12px !important;
+  height: 12px !important;
+  color: #000000 !important;
+  stroke-width: 2.5 !important;
+}
+
+/* ── win98 modal chrome ─────────────────────────────────────────────
+   data-role="modal-window" marks every modal's outer card. Repaint
+   it as a classic Windows 98 dialog: gray panel, raised 3D bezel,
+   no rounded corners, no soft shadow, no springy animation.
+   data-role="modal-titlebar" marks the header band (h2/h3 wrapper)
+   and gets the navy → light-blue gradient with white bold text. */
+[data-theme="win98"] [data-role="modal-window"] {
+  border: none !important;
+  border-radius: 0 !important;
+  background: #c0c0c0 !important;
+  font-family: "Tahoma", "MS Sans Serif", sans-serif !important;
+  color: #000000 !important;
+  /* Outer drop shadow + raised bezel mimics a focused dialog frame. */
+  box-shadow:
+    inset 2px 2px 0 #ffffff,
+    inset -2px -2px 0 #404040,
+    inset 4px 4px 0 #dfdfdf,
+    inset -4px -4px 0 #808080,
+    2px 2px 0 #000000 !important;
+  --tw-ring-color: transparent !important;
+  --tw-ring-offset-shadow: 0 0 #0000 !important;
+  --tw-ring-shadow: 0 0 #0000 !important;
+}
+[data-theme="win98"] [data-role="modal-titlebar"] {
+  margin: 4px 4px 0 4px !important;
+  padding: 2px 22px 2px 6px !important;
+  background: linear-gradient(90deg, #000080 0%, #1084d0 100%) !important;
+  color: #ffffff !important;
+  font-family: "Tahoma", "MS Sans Serif", sans-serif !important;
+  font-weight: bold !important;
+  font-size: 12px !important;
+  line-height: 16px !important;
+  text-align: left !important;
+  letter-spacing: 0 !important;
+  border: none !important;
+  border-radius: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  /* The Win98 title bar text is left-aligned and tight; cancel the
+     centering some headers apply via Tailwind. */
+  justify-content: flex-start !important;
+}
+/* Headings inside the titlebar inherit the white bold styling. */
+[data-theme="win98"] [data-role="modal-titlebar"] h1,
+[data-theme="win98"] [data-role="modal-titlebar"] h2,
+[data-theme="win98"] [data-role="modal-titlebar"] h3,
+[data-theme="win98"] [data-role="modal-titlebar"] p {
+  font-size: 12px !important;
+  font-weight: bold !important;
+  color: #ffffff !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  letter-spacing: 0 !important;
+}
+[data-theme="win98"] [data-role="confirm-toast"] [data-role="dialog-close-x"] {
+  /* Classic Win98 close button: small 16×14 square pinned to the top
+     right of the title bar. flex: 0 0 auto + min-width: 0 override the
+     general confirm-toast button rule that forces 75px wide dialog
+     action buttons — the X must be the small title-bar variant. */
+  display: inline-flex !important;
+  position: absolute !important;
+  top: 3px !important;
+  right: 3px !important;
+  bottom: auto !important;
+  left: auto !important;
+  flex: 0 0 auto !important;
+  width: 16px !important;
+  height: 14px !important;
+  min-width: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: #c0c0c0 !important;
+  color: #000000 !important;
+  border: none !important;
+  border-radius: 0 !important;
+  cursor: pointer !important;
+  font-size: 0 !important;
+  line-height: 1 !important;
+  box-shadow:
+    inset 1px 1px 0 #ffffff,
+    inset -1px -1px 0 #404040,
+    inset 2px 2px 0 #dfdfdf,
+    inset -2px -2px 0 #808080 !important;
+}
+[data-theme="win98"] [data-role="confirm-toast"] [data-role="dialog-close-x"]:active {
+  box-shadow:
+    inset 1px 1px 0 #404040,
+    inset -1px -1px 0 #ffffff,
+    inset 2px 2px 0 #808080,
+    inset -2px -2px 0 #dfdfdf !important;
+}
+[data-theme="win98"] [data-role="confirm-toast"] [data-role="dialog-close-x"] svg {
+  /* Compact 8×8 X glyph (with strokeWidth=2 from CloseIcon) gives the
+     authentic chunky Windows 98 close X. */
+  width: 8px !important;
+  height: 8px !important;
+  color: #000000 !important;
+}
+[data-theme="win98"] [data-role="confirm-toast"] [data-role="dialog-close-x"]:active {
+  box-shadow:
+    inset 1px 1px 0 #404040,
+    inset -1px -1px 0 #ffffff,
+    inset 2px 2px 0 #808080,
+    inset -2px -2px 0 #dfdfdf !important;
+}
+/* Message body sits below the title bar with the gray panel padding. */
+[data-theme="win98"] [data-role="confirm-toast"] > p {
+  margin: 12px 16px !important;
+  padding: 0 !important;
+  color: #000000 !important;
+  font-size: 12px !important;
+  line-height: 1.45 !important;
+  text-align: left !important;
+}
+/* Button row at the bottom, right-aligned (Windows convention). */
+[data-theme="win98"] [data-role="confirm-toast"] > div:last-of-type {
+  margin: 0 !important;
+  padding: 8px 8px 10px !important;
+  justify-content: flex-end !important;
+  gap: 6px !important;
+  border-top: 1px solid #808080 !important;
+  box-shadow: inset 0 1px 0 #ffffff !important;
+}
+/* Buttons inside the dialog: keep the global raised bevel from the
+   win98 button rule, just fix the minimum width so they look like
+   actual Windows dialog buttons (OK / 취소) rather than full-width
+   pills. */
+[data-theme="win98"] [data-role="confirm-toast"] button {
+  flex: 0 0 auto !important;
+  min-width: 75px !important;
+  border-radius: 0 !important;
+  padding: 4px 12px !important;
+  font-size: 12px !important;
+  font-weight: normal !important;
+}
+/* Optional extraAction (e.g. "보고서 저장") above the OK/cancel row —
+   render it as a normal Windows button too. */
+[data-theme="win98"] [data-role="confirm-toast"] > button {
+  margin: 8px 16px 0 !important;
+  width: auto !important;
+  border-radius: 0 !important;
+  padding: 4px 12px !important;
+  font-size: 12px !important;
+}
+
+/* Win98 wrapper around row-btn (right-side inbox filter etc.):
+   Tailwind paints this as a rounded white card (bg-s2 = white in
+   win98), leaving a visible white pad behind the raised filter
+   button. Repaint as the same raised classic panel as form-panel
+   so the button blends with its container. Excluded: the quick-
+   assign drawer (sits at the top of the center column and must not
+   gain a card surround that pushes it out of line with the side
+   tab strips). */
+[data-theme="win98"] :is(li, div):has(> [data-role="row-btn"]):not([data-role="quick-assign"]) {
+  background: #c0c0c0 !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow:
+    inset 1px 1px 0 #ffffff,
+    inset -1px -1px 0 #404040,
+    inset 2px 2px 0 #dfdfdf,
+    inset -2px -2px 0 #808080 !important;
+}
+
+/* Sidebar tabs = Windows file-tab look */
+[data-theme="win98"] [data-role^="sidebar-tab"] {
+  background: #c0c0c0 !important;
+  border: none !important;
+  color: #000000 !important;
+  font-weight: normal !important;
+  box-shadow:
+    inset 1px 1px 0 #ffffff,
+    inset 0 -1px 0 #808080 !important;
+}
+[data-theme="win98"] [data-role="sidebar-tab-active"] {
+  background: #ffffff !important;
+  color: #000000 !important;
+  font-weight: bold !important;
+  box-shadow:
+    inset 1px 1px 0 #ffffff,
+    inset -1px 0 0 #808080,
+    inset 0 -1px 0 #ffffff !important;
+}
+
+/* Toggle = Windows 98 sunken checkbox with checkmark */
+[data-theme="win98"] [data-role="toggle"] {
+  width: 18px !important;
+  height: 18px !important;
+  border-radius: 0 !important;
+  border: none !important;
+  background-color: #ffffff !important;
+  background-image: none;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 14px 14px;
+  box-shadow:
+    inset  1px  1px 0 #808080,
+    inset -1px -1px 0 #ffffff,
+    inset  2px  2px 0 #404040,
+    inset -2px -2px 0 #dfdfdf !important;
+  padding: 0 !important;
+  transition: none !important;
+  flex-shrink: 0;
+}
+[data-theme="win98"] [data-role="toggle"] [data-role="toggle-knob"] {
+  display: none !important;
+}
+[data-theme="win98"] [data-role="toggle"][data-on="true"] {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' shape-rendering='crispEdges'><path d='M2 8 L6 12 L14 4' stroke='black' stroke-width='2.4' fill='none' stroke-linecap='square' stroke-linejoin='miter'/></svg>") !important;
+}
+[data-theme="win98"] [data-role="toggle"]:hover {
+  background-color: #efefef !important;
+}
+[data-theme="win98"] [data-role="toggle"]:active {
+  box-shadow:
+    inset  2px  2px 0 #404040,
+    inset -2px -2px 0 #dfdfdf,
+    inset  3px  3px 0 #808080,
+    inset -3px -3px 0 #ffffff !important;
+}
+
+/* Section icon container — flush, no badge background */
+[data-theme="win98"] [data-role="section-icon"] {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+/* Color swatch = thick black 1-pixel border */
+[data-theme="win98"] [data-role="color-swatch"] {
+  border: 2px solid #000000 !important;
+  border-radius: 0 !important;
+  box-shadow: 1px 1px 0 #ffffff inset !important;
+}
+
+/* Scrollbar = chunky 16px Windows scrollbar */
+[data-theme="win98"] ::-webkit-scrollbar {
+  width: 16px !important;
+  height: 16px !important;
+}
+[data-theme="win98"] ::-webkit-scrollbar-track {
+  background-color: #c0c0c0 !important;
+  background-image:
+    linear-gradient(45deg, #ffffff 25%, transparent 25%),
+    linear-gradient(-45deg, #ffffff 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #ffffff 75%),
+    linear-gradient(-45deg, transparent 75%, #ffffff 75%) !important;
+  background-size: 4px 4px !important;
+  background-position: 0 0, 0 2px, 2px -2px, -2px 0 !important;
+}
+[data-theme="win98"] ::-webkit-scrollbar-thumb {
+  background: #c0c0c0 !important;
+  border-radius: 0 !important;
+  box-shadow:
+    inset 1px 1px 0 #ffffff,
+    inset -1px -1px 0 #404040,
+    inset 2px 2px 0 #dfdfdf,
+    inset -2px -2px 0 #808080 !important;
+}
+[data-theme="win98"] ::-webkit-scrollbar-thumb:hover {
+  background: #d4d4d4 !important;
+}
+
+/* ─────────────────────────────────────────────────
+   KITSCH — cream background, thick borders,
+   sticker / pop-art illustration aesthetic
+───────────────────────────────────────────────── */
+[data-theme="kitsch"] {
+  --base:  255 250 240;   /* warm cream */
+  --s1:    255 255 255;   /* white */
+  --s2:    255 245 252;   /* pale pink */
+  --s3:    248 235 255;   /* pale purple */
+  --bd:    255  26 140;   /* HOT PINK — border-bd/* → pink-tinted */
+  --t1:     28   5  48;   /* deep purple */
+  --t2:    100  55 135;
+  --t3:    165 130 190;
+  --ac:    255  26 140;   /* hot pink */
+  --ac-lo:  255  85 175;
+  --ac-hi:  210   0 108;
+  --c-ok:   21 128  61;
+  --c-warn: 230 130   0;
+  --c-err:  255  60  80;
+  color-scheme: light;
+}
+
+/* kitsch — overall page (solid cream, no gradient) */
+[data-theme="kitsch"] {
+  background: #fffaf0 !important;
+}
+
+/* kitsch — topbar */
+[data-theme="kitsch"] [data-role="topbar"] {
+  background-color: #ffffff !important;
+  border-bottom: 3px solid rgb(var(--ac) / 0.50) !important;
+  box-shadow: none !important;
+}
+
+/* kitsch — sidebars now use the same two-layer accent-tracking
+   pattern candy adopted: a baseColor wash underneath (the existing
+   --kitsch-sidebar JS-set variable, falling back to default pale-
+   pink / pale-lilac when the user hasn't picked a 전체색) plus a
+   live accent tint on top. Without the accent overlay, picking a
+   non-pink accent left the sidebars looking out of tune with the
+   rest of the chrome. */
+[data-theme="kitsch"] [data-role="left-sidebar"] {
+  background:
+    linear-gradient(180deg, rgb(var(--ac) / 0.10) 0%, rgb(var(--ac) / 0.04) 100%),
+    rgb(var(--kitsch-sidebar, 255 248 254)) !important;
+  border-right: 3px solid rgb(var(--ac) / 0.35) !important;
+}
+
+[data-theme="kitsch"] [data-role="right-sidebar"] {
+  background:
+    linear-gradient(180deg, rgb(var(--ac) / 0.04) 0%, rgb(var(--ac) / 0.10) 100%),
+    rgb(var(--kitsch-sidebar, 248 240 255)) !important;
+  border-left: 3px solid rgb(var(--ac) / 0.35) !important;
+}
+
+/* kitsch — quick assign drawer */
+[data-theme="kitsch"] [data-role="quick-assign"] {
+  background: rgb(var(--ac) / 0.04) !important;
+  border-bottom: 3px solid rgb(var(--ac) / 0.30) !important;
+}
+
+/* kitsch — kanban columns get sticker/card feel */
+[data-theme="kitsch"] [data-role="kanban-col"] {
+  border: 3px solid rgb(var(--ac) / 0.45) !important;
+  background-color: #ffffff !important;
+  box-shadow: 5px 5px 0 rgb(var(--ac-hi) / 0.22) !important;
+  border-radius: 1.5rem !important;
+}
+
+/* kitsch — kanban board container reserves a few extra px on the right
+   and bottom so the 5px sticker drop-shadow on each column doesn't get
+   clipped by overflow-x-auto. Last column in each row + the last row
+   were having their shadow sheared off otherwise. */
+[data-theme="kitsch"] [data-role="kanban-board"] {
+  padding-right: 8px !important;
+  padding-bottom: 1.25rem !important;
+}
+
+/* kitsch — kanban column header strip (solid, no gradient) */
+[data-theme="kitsch"] [data-role="kanban-header"] {
+  background: rgb(var(--ac) / 0.08) !important;
+  border-bottom: 2px solid rgb(var(--ac) / 0.25) !important;
+  border-radius: 1.35rem 1.35rem 0 0 !important;
+}
+
+/* kitsch — cards (inbox reports, vault docs, etc.) */
+[data-theme="kitsch"] [data-role="card"] {
+  border: 3px solid rgb(var(--ac) / 0.40) !important;
+  background-color: #ffffff !important;
+  box-shadow: 4px 4px 0 rgb(var(--ac-hi) / 0.20) !important;
+  border-radius: 1rem !important;
+}
+[data-theme="kitsch"] [data-role="card-highlight"] {
+  border: 3px solid rgb(var(--ac) / 0.75) !important;
+  box-shadow: 4px 4px 0 rgb(var(--ac-hi) / 0.35) !important;
+}
+
+/* kitsch — task cards */
+[data-theme="kitsch"] [data-role="task-card"] {
+  border: 3px solid rgb(var(--ac) / 0.40) !important;
+  background-color: #ffffff !important;
+  box-shadow: 4px 4px 0 rgb(var(--ac-hi) / 0.20) !important;
+  border-radius: 1rem !important;
+}
+
+/* ── kitsch BUTTONS — hard-shadow 3D "뿅뿅" press feel ──
+   모든 blur shadow 제거, hard offset shadow 로 입체감
+   active 시 translateY로 실제로 눌리는 효과               */
+
+/* 공통 버튼 기반 — blur shadow 전부 제거 */
+[data-theme="kitsch"] button {
+  box-shadow: none !important;
+  transition: transform 0.07s ease, box-shadow 0.07s ease !important;
+}
+
+/* 사이드바 탭: 3D 효과 제외, 컨테이너 overflow-hidden 과 충돌 방지 */
+[data-theme="kitsch"] [data-role^="sidebar-tab"] {
+  border-radius: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
+  transform: none !important;
+  transition: background 0.1s ease !important;
+}
+[data-theme="kitsch"] [data-role="sidebar-tab-active"] {
+  background: rgb(var(--ac) / 0.12) !important;
+  border-bottom: 3px solid rgb(var(--ac)) !important;
+}
+
+/* 일반 버튼 (pill-shaped + 3D) — 사이드바 탭 제외 */
+[data-theme="kitsch"] button:not([data-role="icon-btn"]):not([data-role^="sidebar-tab"]):not([data-role="row-btn"]) {
+  border-radius: 999px !important;
+  border: 3px solid rgb(var(--ac-hi) / 0.50) !important;
+  /* Negative spread tucks the solid drop inside the pill outline so it
+     doesn't read as a horizontal stripe past the rounded ends. */
+  box-shadow: 0 4px 0 -1.5px rgb(var(--ac-hi) / 0.40) !important;
+  transform: translateY(0);
+}
+[data-theme="kitsch"] button:not([data-role="icon-btn"]):not([data-role^="sidebar-tab"]):not([data-role="row-btn"]):hover {
+  box-shadow: 0 5px 0 -1.5px rgb(var(--ac-hi) / 0.45) !important;
+  transform: translateY(-1px) !important;
+}
+[data-theme="kitsch"] button:not([data-role="icon-btn"]):not([data-role^="sidebar-tab"]):not([data-role="row-btn"]):active {
+  box-shadow: 0 1px 0 -1.5px rgb(var(--ac-hi) / 0.35) !important;
+  transform: translateY(3px) !important;
+}
+
+/* primary button — 솔리드 색상(no gradient) + 더 강한 입체 */
+[data-theme="kitsch"] [data-role="primary-btn"] {
+  background: rgb(var(--ac)) !important;
+  border: 3px solid rgb(var(--ac-hi)) !important;
+  box-shadow: 0 5px 0 rgb(var(--ac-hi)) !important;
+  letter-spacing: 0.04em;
+  transform: translateY(0) !important;
+}
+[data-theme="kitsch"] [data-role="primary-btn"]:hover {
+  background: rgb(var(--ac-lo)) !important;
+  box-shadow: 0 6px 0 rgb(var(--ac-hi)) !important;
+  transform: translateY(-1px) !important;
+}
+[data-theme="kitsch"] [data-role="primary-btn"]:active {
+  box-shadow: 0 1px 0 rgb(var(--ac-hi)) !important;
+  transform: translateY(4px) !important;
+}
+
+/* icon button — 원형 + 작은 depth */
+[data-theme="kitsch"] [data-role="icon-btn"] {
+  border: 2.5px solid rgb(var(--ac) / 0.40) !important;
+  box-shadow: 0 3px 0 rgb(var(--ac-hi) / 0.30) !important;
+  transform: translateY(0);
+}
+[data-theme="kitsch"] [data-role="icon-btn"]:hover {
+  box-shadow: 0 4px 0 rgb(var(--ac-hi) / 0.35) !important;
+  transform: translateY(-1px) !important;
+}
+[data-theme="kitsch"] [data-role="icon-btn"]:active {
+  box-shadow: 0 0px 0 rgb(var(--ac-hi) / 0.30) !important;
+  transform: translateY(3px) !important;
+}
+
+/* ── kitsch INPUTS — 굵은 테두리 + 입체감 ── */
+[data-theme="kitsch"] input:not([type="color"]),
+[data-theme="kitsch"] select,
+[data-theme="kitsch"] textarea {
+  border: 3px solid rgb(var(--ac) / 0.35) !important;
+  border-radius: 1rem !important;
+  box-shadow: 0 3px 0 rgb(var(--ac-hi) / 0.18) !important;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
+}
+[data-theme="kitsch"] input:not([type="color"]):focus,
+[data-theme="kitsch"] select:focus,
+[data-theme="kitsch"] textarea:focus {
+  border-color: rgb(var(--ac)) !important;
+  box-shadow: 0 4px 0 rgb(var(--ac-hi) / 0.45) !important;
+  outline: none !important;
+}
+
+/* kitsch — active sidebar tab highlighted */
+[data-theme="kitsch"] [data-role="sidebar-tab-active"] {
+  background: rgb(var(--ac) / 0.10) !important;
+}
+
+/* kitsch — tags become filled stickers */
+[data-theme="kitsch"] [data-role="tag"] {
+  background: rgb(var(--ac) / 0.12) !important;
+  border: 2px solid rgb(var(--ac) / 0.35) !important;
+  color: rgb(var(--ac-hi)) !important;
+  font-weight: 700;
+  border-radius: 999px !important;
+}
+
+/* kitsch — stat chips */
+[data-theme="kitsch"] [data-role="stat-chip"] {
+  border-width: 2.5px !important;
+  font-weight: 900;
+}
+
+/* kitsch — section count badge */
+[data-theme="kitsch"] [data-role="count-badge"] {
+  background: rgb(var(--ac) / 0.15) !important;
+  color: rgb(var(--ac-hi)) !important;
+  border: 2px solid rgb(var(--ac) / 0.35) !important;
+  border-radius: 999px !important;
+}
+
+/* ═══════════════════════════════════════════════════
+   Base styles
+═══════════════════════════════════════════════════ */
+@layer base {
+  html {
+    font-family: Verdana, "Noto Sans KR", sans-serif;
+    font-weight: 700;
+    background: rgb(var(--base));
+    color: rgb(var(--t1));
+  }
+
+  body { margin: 0; }
+  * { box-sizing: border-box; }
+
+  /* Remove all outlines and underlines */
+  button, a, input, select, textarea, [role="switch"] {
+    outline: none !important;
+  }
+  a { text-decoration: none !important; }
+
+  button, input, select, textarea {
+    font: inherit;
+    font-weight: inherit;
+  }
+
+  textarea { resize: vertical; }
+
+  /* Board title — WebkitTextFillColor 이 placeholder 를 덮지 않도록 명시 */
+  [data-role="board-title"] {
+    color: rgb(var(--t1));
+    -webkit-text-fill-color: rgb(var(--t1));
+  }
+  [data-role="board-title"]::placeholder {
+    color: rgb(var(--t3)) !important;
+    -webkit-text-fill-color: rgb(var(--t3)) !important;
+    opacity: 1;
+  }
+
+  /* Board title cursor-area overlay — paints only inside the caret block.
+     Implemented as a <div> (not <input>) so it never inherits theme-level
+     !important input styling (background, border, box-shadow, etc). */
+  [data-role="board-title-overlay"] {
+    color: rgb(var(--ac-fg)) !important;
+    -webkit-text-fill-color: rgb(var(--ac-fg)) !important;
+    text-shadow: none !important;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb {
+    background: rgb(var(--s3));
+    border-radius: 999px;
+  }
+  ::-webkit-scrollbar-thumb:hover { background: rgb(var(--bd) / 0.20); }
+
+  /* Date picker icon */
+  input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(0.6);
+    cursor: pointer;
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   Custom cursors — kanban board uses an open-hand glyph, individual task
+   cards swap to a pointing-finger. Both are inline SVGs encoded as base64
+   so they ship without an extra HTTP round-trip and stay crisp at 28px.
+   "pointer" / "grab" come last as a fallback for browsers that refuse the
+   custom cursor (e.g. CSP-restricted contexts).
+═══════════════════════════════════════════════════ */
+[data-role="kanban-board"],
+[data-role="kanban-col"],
+[data-role="kanban-body"] {
+  cursor: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyOCIgaGVpZ2h0PSIyOCIgdmlld0JveD0iMCAwIDI4IDI4Ij48cGF0aCBkPSJNOSAxNlY3LjVhMS41IDEuNSAwIDEgMSAzIDBWMTNNMTIgMTNWNS41YTEuNSAxLjUgMCAxIDEgMyAwVjEzTTE1IDEzVjYuNWExLjUgMS41IDAgMSAxIDMgMFYxNE0xOCAxNFY4LjVhMS41IDEuNSAwIDEgMSAzIDBWMThjMCAzLjUtMi41IDctNyA3cy03LTMtNy03di0xLjVsLTItM2ExLjUgMS41IDAgMCAxIDIuNS0xLjdMOSAxNiIgZmlsbD0iI2ZmZmZmZiIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjEuNCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PC9zdmc+") 14 14, grab;
+}
+
+[data-role="task-card"],
+[data-role="task-card"] * {
+  cursor: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyOCIgaGVpZ2h0PSIyOCIgdmlld0JveD0iMCAwIDI4IDI4Ij48cGF0aCBkPSJNMTEgMTRWNC41YTEuNSAxLjUgMCAxIDEgMyAwVjEyTTE0IDEydi0xYTEuNSAxLjUgMCAxIDEgMyAwdjJNMTcgMTN2LS41YTEuNSAxLjUgMCAxIDEgMyAwVjE4YzAgMy41LTIuNSA3LTcgN3MtNy0zLTctN3YtMmwtMi0zYTEuNSAxLjUgMCAwIDEgMi41LTEuN0wxMSAxNCIgZmlsbD0iI2ZmZmZmZiIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjEuNCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PC9zdmc+") 12 4, pointer;
+}
+
+/* Inputs and textareas inside cards keep the native text caret so editing
+   stays unambiguous. Buttons also revert to the OS pointer so they read as
+   distinct, clickable controls rather than another card target. */
+[data-role="task-card"] input,
+[data-role="task-card"] textarea,
+[data-role="task-card"] select {
+  cursor: text;
+}
+[data-role="task-card"] button,
+[data-role="task-card"] [role="button"]:not([data-role="task-card"]) {
+  cursor: pointer;
+}
+
+/* ═══════════════════════════════════════════════════
+   Mobile drag affordances — long-press on touch devices defaults to text
+   selection + the iOS callout menu, which fights the custom drag-and-drop
+   ghost. Disable both on draggable surfaces, but leave editable controls
+   (inputs, textareas) alone so editing still works as expected.
+═══════════════════════════════════════════════════ */
+[data-role="task-card"],
+[data-role="kanban-col"],
+[data-role="kanban-header"],
+[data-role="kanban-body"] {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Editable controls inside cards opt back in so users can still long-press to
+   place a caret / select text while editing a title or description. */
+[data-role="task-card"] input,
+[data-role="task-card"] textarea,
+[data-role="task-card"] [contenteditable="true"] {
+  -webkit-user-select: text;
+  user-select: text;
+  -webkit-touch-callout: default;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Force-mobile / compact mode — replays the layout the responsive utilities
+   would produce below the `md` breakpoint, regardless of actual viewport
+   width. Activated via [data-force-mobile="true"] on the BoardView root.
+
+   Tailwind compiles md:* / xl:* / max-md:* into media queries; we can't
+   disable a media query from JS, so we override their effects here at a
+   higher specificity (parent attr + the original class). Keep in sync if
+   new responsive utilities show up on the board surface.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* `hidden md:block` / `hidden md:flex` / `hidden xl:block` / `hidden xl:flex`:
+   the `hidden` part is the narrow-viewport intent — let it win. The compact
+   toggle is an exception: it stays visible in compact mode so the user can
+   click it again to leave compact mode. */
+[data-force-mobile="true"] .hidden.md\:block,
+[data-force-mobile="true"] .hidden.xl\:block,
+[data-force-mobile="true"] .hidden.md\:flex:not([data-role="compact-toggle"]),
+[data-force-mobile="true"] .hidden.xl\:flex { display: none !important; }
+[data-force-mobile="true"] [data-role="compact-toggle"] { display: flex !important; }
+
+/* `<x> md:hidden`: undo the md+ display:none. Two cases:
+   1) explicit display utility alongside (flex / block / grid …) — restore it.
+   2) no explicit display utility — default to block (the only non-display
+      callsite is a wrapper div, fine as block). */
+[data-force-mobile="true"] .md\:hidden.flex { display: flex !important; }
+[data-force-mobile="true"] .md\:hidden.inline-flex { display: inline-flex !important; }
+[data-force-mobile="true"] .md\:hidden.grid { display: grid !important; }
+[data-force-mobile="true"] .md\:hidden.block { display: block !important; }
+[data-force-mobile="true"] .md\:hidden:not(.flex):not(.inline-flex):not(.grid):not(.block):not(.inline-block) {
+  display: block !important;
+}
+
+/* Spacing utilities — keep the narrow gap/padding. */
+[data-force-mobile="true"] .md\:gap-3,
+[data-force-mobile="true"] .md\:gap-4,
+[data-force-mobile="true"] .xl\:gap-2,
+[data-force-mobile="true"] .xl\:gap-4 { gap: 0.5rem !important; }
+[data-force-mobile="true"] .md\:px-4,
+[data-force-mobile="true"] .xl\:px-6 { padding-left: 0.75rem !important; padding-right: 0.75rem !important; }
+
+/* Title input shrinks to the narrow width. */
+[data-force-mobile="true"] .xl\:w-56 { width: 9rem !important; }
+[data-force-mobile="true"] .xl\:text-base { font-size: 0.875rem !important; line-height: 1.25rem !important; }
+
+/* Sidebar widths: replay the narrow `w-[85vw] max-w-[320px|340px]` baseline
+   instead of the md/xl wide widths. */
+[data-force-mobile="true"] aside[data-role="left-sidebar"].md\:w-64,
+[data-force-mobile="true"] aside[data-role="left-sidebar"].xl\:w-72,
+[data-force-mobile="true"] aside[data-role="right-sidebar"].md\:w-72,
+[data-force-mobile="true"] aside[data-role="right-sidebar"].xl\:w-80 {
+  width: 85vw !important;
+}
+[data-force-mobile="true"] aside[data-role="left-sidebar"] { max-width: 320px !important; }
+[data-force-mobile="true"] aside[data-role="right-sidebar"] { max-width: 340px !important; }
+
+/* Sidebars become slide-in drawers. The narrow-viewport max-md:* utilities
+   only fire below 768px, so we replay them here. Positioned absolute
+   inside the board-shell so the drawer auto-aligns under whatever
+   topbar+error-banner stack happens to be above it. */
+[data-force-mobile="true"] aside[data-role="left-sidebar"],
+[data-force-mobile="true"] aside[data-role="right-sidebar"] {
+  position: absolute !important;
+  top: 0 !important;
+  bottom: 0 !important;
+  z-index: 40 !important;
+  transition: transform 200ms !important;
+}
+[data-force-mobile="true"] aside[data-role="left-sidebar"] { left: 0 !important; }
+[data-force-mobile="true"] aside[data-role="right-sidebar"] { right: 0 !important; }
+
+/* Drawer shadow only while open. When closed the drawer is translated off-
+   screen but the shadow's blur spread still bleeds past the viewport edge
+   onto the board — especially visible on light/high-chroma themes like
+   kitsch. Suppress the Tailwind max-md:shadow-2xl whenever the drawer
+   isn't in the open (translate-x-0) state. Applies to both compact
+   ([data-force-mobile]) and true mobile viewports (<768px). */
+aside[data-role="left-sidebar"].max-md\:-translate-x-full,
+aside[data-role="right-sidebar"].max-md\:translate-x-full {
+  box-shadow: none !important;
+}
+[data-force-mobile="true"] aside[data-role="left-sidebar"].max-md\:-translate-x-full,
+[data-force-mobile="true"] aside[data-role="right-sidebar"].max-md\:translate-x-full {
+  box-shadow: none !important;
+}
+
+/* React toggles between max-md:translate-x-0 (open) and max-md:-translate-x-full
+   / max-md:translate-x-full (closed). Those only apply <768px viewport — force
+   them on at any viewport when compact mode is active. */
+[data-force-mobile="true"] .max-md\:translate-x-0 { transform: translateX(0) !important; }
+[data-force-mobile="true"] .max-md\:-translate-x-full { transform: translateX(-100%) !important; }
+[data-force-mobile="true"] .max-md\:translate-x-full { transform: translateX(100%) !important; }
+
+/* Inner board padding switches p-5 → p-3 below md. */
+[data-force-mobile="true"] .max-md\:p-3 { padding: 0.75rem !important; }
+
+/* Two-column grids collapse to one column. */
+[data-force-mobile="true"] .md\:grid-cols-2,
+[data-force-mobile="true"] .sm\:grid-cols-3 { grid-template-columns: repeat(1, minmax(0, 1fr)) !important; }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Mini-card preview mode — opt-in dense kanban layout for mobile-shaped
+   viewports. When the user enables the "미니카드" toggle in the column
+   selector, the board sets [data-mini-cards="true"] and every task card
+   inside hides its secondary chrome (description / tag row / report
+   link / action buttons), keeping only the title + status badge in the
+   header row. Lets 3-column / 4-column layouts stay scannable on a
+   phone where regular cards would be unreadable at ~110px wide.
+   ═══════════════════════════════════════════════════════════════════════ */
+[data-mini-cards="true"] [data-role="task-card"] {
+  padding: 0.5rem !important;
+}
+/* Mini-card mode targets a 4-column phone layout where each column is
+   ~80px wide. The default kanban-header padding (px-4 py-3) and right-
+   side cluster (count chip + collapse + close) eat all of that. Strip
+   the chip + collapse below 140px so title + close still fit; below
+   100px also shrink padding and the close button. */
+[data-mini-cards="true"] [data-role="kanban-header"] {
+  padding-left: 0.5rem !important;
+  padding-right: 0.5rem !important;
+  padding-top: 0.5rem !important;
+  padding-bottom: 0.5rem !important;
+}
+@container (max-width: 140px) {
+  [data-mini-cards="true"] [data-role="kanban-header"] [data-role="section-count"],
+  [data-mini-cards="true"] [data-role="kanban-header"] [data-role="icon-btn"][aria-label="펼치기"],
+  [data-mini-cards="true"] [data-role="kanban-header"] [data-role="icon-btn"][aria-label="접기"] {
+    display: none !important;
+  }
+}
+@container (max-width: 100px) {
+  [data-mini-cards="true"] [data-role="kanban-header"] {
+    padding-left: 0.375rem !important;
+    padding-right: 0.375rem !important;
+  }
+  [data-mini-cards="true"] [data-role="kanban-header"] h3 {
+    font-size: 0.6875rem !important;
+    line-height: 0.9rem !important;
+  }
+  [data-mini-cards="true"] [data-role="kanban-body"] {
+    padding: 0.375rem !important;
+  }
+  [data-mini-cards="true"] [data-role="task-card"] {
+    padding: 0.375rem !important;
+  }
+}
+[data-mini-cards="true"] [data-role="task-card"] h4 {
+  font-size: 0.75rem !important;       /* text-xs */
+  line-height: 1rem !important;
+  display: -webkit-box !important;
+  -webkit-line-clamp: 2 !important;
+  -webkit-box-orient: vertical !important;
+  overflow: hidden !important;
+  /* Card title in mini mode must be allowed to shrink and wrap inside
+     its flex parent; the default h4 has no min-width so a long Korean
+     word with shrink-0 icon siblings collapses the text to 0 width. */
+  min-width: 0 !important;
+  flex: 1 1 auto !important;
+  overflow-wrap: anywhere !important;
+  word-break: break-word !important;
+}
+/* Narrow mini-card columns: stack the header row vertically so the
+   title gets the full column width on its own line and the action
+   icons (bookmark/close) sit below — avoids the icon cluster eating
+   the title space at ~80px columns. */
+@container (max-width: 140px) {
+  [data-mini-cards="true"] [data-role="task-card"] > :first-child {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0.25rem !important;
+  }
+  [data-mini-cards="true"] [data-role="task-card"] > :first-child > div:last-child {
+    justify-content: flex-end !important;
+  }
+}
+/* Very narrow (~80px) columns: drop the bookmark to give the title
+   and close button more room. Card-level delete is the more critical
+   action; bookmark stays reachable via the task modal. */
+@container (max-width: 100px) {
+  [data-mini-cards="true"] [data-role="task-card"] [data-variant="bookmark-toggle"] {
+    display: none !important;
+  }
+}
+/* Hide everything after the header row (description, tag row, report
+   button, action buttons). The header row itself stays visible so the
+   user keeps the bookmark / delete icons. */
+[data-mini-cards="true"] [data-role="task-card"] > :not(:first-child) {
+  display: none !important;
+}
+/* Re-expose a single status pip below the title so the user can still
+   tell at a glance which cards are active / retrying / queued. ExecBadge
+   lives inside the tag row which is hidden above, so we synthesize a
+   replacement dot via the border color (already painted by the React
+   borderMap) — no extra DOM needed, just shrink the padding so the dot
+   visually balances the title. */
