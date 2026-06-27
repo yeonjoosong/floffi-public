@@ -14,11 +14,13 @@ export type NotificationTarget = {
   name: string;
   url: string;
   enabled: boolean;
+  masked?: boolean;
 };
 
 export type WebhookConfig = {
   token: string;
   enabled: boolean;
+  masked?: boolean;
 };
 
 export type TaskAttachment = {

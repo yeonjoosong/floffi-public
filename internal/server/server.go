@@ -4,9 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net"
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -37,6 +39,9 @@ type Server struct {
 }
 
 func New(addr string, ac AuthConfig) *Server {
+	if err := validateDeploymentSecurity(addr); err != nil {
+		panic(err)
+	}
 	if _, err := os.Getwd(); err != nil {
 		panic(err)
 	}
@@ -93,6 +98,44 @@ func New(addr string, ac AuthConfig) *Server {
 }
 
 const sseRevokeMarker = "__session_revoked__"
+
+func validateDeploymentSecurity(addr string) error {
+	host, _, err := net.SplitHostPort(addr)
+	if err != nil {
+		host = addr
+	}
+	host = strings.TrimSpace(host)
+	if os.Getenv("FLOFFI_PROD") == "1" {
+		if strings.TrimSpace(os.Getenv("FLOFFI_JWT_SECRET")) == "" {
+			return errors.New("FLOFFI_PROD=1 requires FLOFFI_JWT_SECRET")
+		}
+		if os.Getenv("FLOFFI_ALLOW_INSECURE_HTTP") == "1" {
+			return errors.New("FLOFFI_PROD=1 cannot be combined with FLOFFI_ALLOW_INSECURE_HTTP=1")
+		}
+		return nil
+	}
+	if os.Getenv("FLOFFI_ALLOW_DEV_BIND") == "1" {
+		return nil
+	}
+	if isPublicBindHost(host) {
+		return fmt.Errorf("refusing non-production bind on %q; set FLOFFI_PROD=1 or FLOFFI_ALLOW_DEV_BIND=1", host)
+	}
+	return nil
+}
+
+func isPublicBindHost(host string) bool {
+	host = strings.TrimSpace(strings.Trim(host, "[]"))
+	switch strings.ToLower(host) {
+	case "", "localhost", "127.0.0.1", "::1":
+		return false
+	case "0.0.0.0", "::":
+		return true
+	}
+	if ip := net.ParseIP(host); ip != nil {
+		return !ip.IsLoopback()
+	}
+	return true
+}
 
 // publishWorkspaceChanged fans out a new ETag to every connected SSE client.
 // Slow subscribers (full buffered channel) are skipped so one stuck client

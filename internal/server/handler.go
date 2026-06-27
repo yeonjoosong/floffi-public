@@ -279,13 +279,12 @@ func (s *Server) serveAppShell(w http.ResponseWriter, r *http.Request) {
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <link rel="icon" href="/favicon.ico?v=%s" sizes="any" />
-    <link rel="icon" href="/favicon.svg?v=%s" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/favicon-180.png?v=%s" />
     <meta name="theme-color" content="#ff8a1d" />
     <title>floffi</title>
     <script type="module" crossorigin src="/assets/app.js?v=%s"></script>
     <link rel="stylesheet" crossorigin href="/assets/app.css?v=%s" />
-  </head>`, assetVersion, assetVersion, assetVersion, assetVersion, assetVersion)
+  </head>`, assetVersion, assetVersion, assetVersion, assetVersion)
 	_, _ = fmt.Fprint(w, `
   <body>
     <div id="root">

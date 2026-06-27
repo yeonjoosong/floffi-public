@@ -6,6 +6,9 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"net"
+	"net/netip"
+	"net/url"
 	"os"
 	"slices"
 	"strconv"
@@ -33,6 +36,7 @@ type workspaceState struct {
 type workspaceWebhookConfig struct {
 	Token   string `json:"token"`
 	Enabled bool   `json:"enabled"`
+	Masked  bool   `json:"masked,omitempty"`
 }
 
 type workspaceNotificationTarget struct {
@@ -40,6 +44,91 @@ type workspaceNotificationTarget struct {
 	Name    string `json:"name"`
 	URL     string `json:"url"`
 	Enabled bool   `json:"enabled"`
+	Masked  bool   `json:"masked,omitempty"`
+}
+
+func (c workspaceWebhookConfig) redacted() workspaceWebhookConfig {
+	return workspaceWebhookConfig{
+		Token:   "",
+		Enabled: c.Enabled,
+		Masked:  true,
+	}
+}
+
+func redactWorkspaceSecrets(state workspaceState) workspaceState {
+	cloned := cloneWorkspaceState(state)
+	cloned.WebhookConfig = cloned.WebhookConfig.redacted()
+	if len(cloned.Notifications) > 0 {
+		for i := range cloned.Notifications {
+			cloned.Notifications[i].URL = ""
+			cloned.Notifications[i].Masked = true
+		}
+	}
+	return cloned
+}
+
+func preserveProtectedWorkspaceSecrets(next, current workspaceState) workspaceState {
+	next.WebhookConfig = current.WebhookConfig
+	next.Notifications = append([]workspaceNotificationTarget(nil), current.Notifications...)
+	return next
+}
+
+func canManageWorkspaceSecrets(role string, isAdmin bool) bool {
+	return isAdmin || role == "owner"
+}
+
+func validateNotificationTargets(targets []workspaceNotificationTarget) error {
+	for _, target := range targets {
+		raw := strings.TrimSpace(target.URL)
+		if raw == "" {
+			return fmt.Errorf("notification url is required")
+		}
+		u, err := url.Parse(raw)
+		if err != nil {
+			return fmt.Errorf("invalid notification url")
+		}
+		if !u.IsAbs() || u.Host == "" {
+			return fmt.Errorf("notification url must be absolute")
+		}
+		switch strings.ToLower(u.Scheme) {
+		case "https":
+		case "http":
+			if !isPublicNotificationHost(u.Hostname()) {
+				return fmt.Errorf("notification url must not target localhost or private networks")
+			}
+		default:
+			return fmt.Errorf("notification url must use http or https")
+		}
+	}
+	return nil
+}
+
+func isPublicNotificationHost(host string) bool {
+	host = strings.TrimSpace(strings.Trim(host, "[]"))
+	if host == "" {
+		return false
+	}
+	if strings.EqualFold(host, "localhost") {
+		return false
+	}
+	if ip, err := netip.ParseAddr(host); err == nil {
+		return ip.IsGlobalUnicast() && !ip.IsPrivate() && !ip.IsLoopback() && !ip.IsLinkLocalUnicast() && !ip.IsMulticast()
+	}
+	ips, err := net.LookupIP(host)
+	if err != nil || len(ips) == 0 {
+		lower := strings.ToLower(host)
+		return !strings.HasSuffix(lower, ".local") && !strings.HasSuffix(lower, ".internal")
+	}
+	for _, ip := range ips {
+		addr, ok := netip.AddrFromSlice(ip)
+		if !ok {
+			return false
+		}
+		if !addr.IsGlobalUnicast() || addr.IsPrivate() || addr.IsLoopback() || addr.IsLinkLocalUnicast() || addr.IsMulticast() {
+			return false
+		}
+	}
+	return true
 }
 
 type workspaceSection struct {

@@ -418,10 +418,13 @@ func (h *Handler) handleSignup(w http.ResponseWriter, r *http.Request) {
 		// existing rows that were created before the policy change.
 		SingleSession: true,
 	}
-	if userCount == 0 && os.Getenv("FLOFFI_DISABLE_BOOTSTRAP_ADMIN") != "1" {
+	bootstrapEmail := strings.ToLower(strings.TrimSpace(os.Getenv("FLOFFI_BOOTSTRAP_ADMIN_EMAIL")))
+	if userCount == 0 && os.Getenv("FLOFFI_DISABLE_BOOTSTRAP_ADMIN") != "1" &&
+		(os.Getenv("FLOFFI_PROD") != "1" || (bootstrapEmail != "" && bootstrapEmail == req.Email)) {
 		// Bootstrap the very first real account as the recoverable admin seat
-		// instead of seeding a network-reachable default credential. Tests can
-		// opt out to build plain-user scenarios deterministically.
+		// instead of seeding a network-reachable default credential. Production
+		// must opt into the email explicitly so a public fresh instance cannot
+		// hand the admin seat to the first random signup.
 		user.ID = SuperAdminID
 		user.IsAdmin = true
 	}

@@ -112,7 +112,7 @@ if [ "$DEV" = "1" ]; then
   start_go() {
     # FLOFFI_DEV_UI: Go 서버가 UI 요청을 Vite 로 프록시 → 평소 쓰던
     # 백엔드 포트로 접속해도 최신 UI(HMR)가 보인다 (handler.go 참고).
-    FLOFFI_DEV_UI="http://localhost:$VITE_PORT" ./floffi serve --port "$PORT" $DOTENV_OPT &
+    FLOFFI_ALLOW_DEV_BIND="${FLOFFI_ALLOW_DEV_BIND:-1}" FLOFFI_DEV_UI="http://localhost:$VITE_PORT" ./floffi serve --port "$PORT" $DOTENV_OPT &
     GO_PID=$!
   }
 
@@ -171,4 +171,4 @@ free_port
 echo
 echo "server logs follow:"
 echo
-exec ./floffi serve --port "$PORT" $DOTENV_OPT
+exec env FLOFFI_ALLOW_DEV_BIND="${FLOFFI_ALLOW_DEV_BIND:-1}" ./floffi serve --port "$PORT" $DOTENV_OPT

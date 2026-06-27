@@ -8,6 +8,7 @@ export function WebhookSection(props: {
   onRegenerate: () => void;
 }) {
   const [copied, setCopied] = useState(false);
+  const readOnly = props.config.masked;
 
   const ingestPath = props.config.token
     ? `/api/webhooks/${props.config.token}/ingest`
@@ -34,6 +35,7 @@ export function WebhookSection(props: {
   }
 
   function copyUrl() {
+    if (!fullUrl) return;
     const text = fullUrl;
     if (navigator.clipboard?.writeText) {
       navigator.clipboard.writeText(text).then(() => {
@@ -57,39 +59,45 @@ export function WebhookSection(props: {
         </div>
 
         {props.config.enabled && (
-          <>
-            <div className="rounded-xl border border-bd/10 bg-s3 px-3 py-2">
-              <p className="mb-1 text-[10px] font-black uppercase tracking-wider text-t3">엔드포인트 URL</p>
-              <p className="break-all font-mono text-[11px] text-t2">{fullUrl}</p>
+          readOnly ? (
+            <div className="rounded-xl border border-bd/10 bg-s3 px-3 py-2 text-[11px] leading-relaxed text-t3">
+              워크스페이스 owner 또는 관리자만 webhook 엔드포인트를 볼 수 있습니다.
             </div>
+          ) : (
+            <>
+              <div className="rounded-xl border border-bd/10 bg-s3 px-3 py-2">
+                <p className="mb-1 text-[10px] font-black uppercase tracking-wider text-t3">엔드포인트 URL</p>
+                <p className="break-all font-mono text-[11px] text-t2">{fullUrl}</p>
+              </div>
 
-            <div className="flex gap-1.5">
-              <button type="button" onClick={copyUrl}
-                className="flex-1 rounded-xl border border-bd/10 bg-s2 py-1.5 text-[11px] font-bold text-t2 transition hover:bg-s3 hover:text-t1">
-                {copied ? "복사됨" : "URL 복사"}
-              </button>
-              <button type="button" onClick={props.onRegenerate}
-                className="flex-1 rounded-xl border border-err/25 bg-err/8 py-1.5 text-[11px] font-bold text-err transition hover:bg-err/15">
-                토큰 재생성
-              </button>
-            </div>
+              <div className="flex gap-1.5">
+                <button type="button" onClick={copyUrl}
+                  className="flex-1 rounded-xl border border-bd/10 bg-s2 py-1.5 text-[11px] font-bold text-t2 transition hover:bg-s3 hover:text-t1">
+                  {copied ? "복사됨" : "URL 복사"}
+                </button>
+                <button type="button" onClick={props.onRegenerate}
+                  className="flex-1 rounded-xl border border-err/25 bg-err/8 py-1.5 text-[11px] font-bold text-err transition hover:bg-err/15">
+                  토큰 재생성
+                </button>
+              </div>
 
-            <div className="rounded-xl border border-ac/15 bg-ac/5 px-3 py-2">
-              <p className="mb-1 text-[10px] font-black uppercase tracking-wider text-ac">크론 스크립트 예시</p>
-              <pre className="whitespace-pre-wrap break-all font-mono text-[10px] leading-relaxed text-t2">{`#!/bin/bash
+              <div className="rounded-xl border border-ac/15 bg-ac/5 px-3 py-2">
+                <p className="mb-1 text-[10px] font-black uppercase tracking-wider text-ac">크론 스크립트 예시</p>
+                <pre className="whitespace-pre-wrap break-all font-mono text-[10px] leading-relaxed text-t2">{`#!/bin/bash
 DATA=$(your_data_command)
 [ -z "$DATA" ] && exit 0
 
-curl -sX POST \\
-  "${fullUrl}" \\
-  -H "Content-Type: application/json" \\
+curl -sX POST \
+  "${fullUrl}" \
+  -H "Content-Type: application/json" \
   -d "{
-    \\\"source\\\": \\\"cron-name\\\",
-    \\\"data\\\": \\\"$DATA\\\",
-    \\\"hasNewData\\\": true
+    \"source\": \"cron-name\",
+    \"data\": \"$DATA\",
+    \"hasNewData\": true
   }"`}</pre>
-            </div>
-          </>
+              </div>
+            </>
+          )
         )}
       </div>
     </SideSection>
@@ -194,6 +202,7 @@ export function NotificationSection(props: {
 }) {
   const [name, setName] = useState("");
   const [url, setUrl] = useState("");
+  const readOnly = props.notifications.some((n) => n.masked);
 
   function handleAdd() {
     const trimName = name.trim();
@@ -208,7 +217,7 @@ export function NotificationSection(props: {
     <SideSection title="알림 전송">
       <div className="space-y-2">
         {props.notifications.length === 0 ? (
-          <EmptyMsg>등록된 알림 대상이 없습니다.</EmptyMsg>
+          <EmptyMsg>{readOnly ? "owner 또는 관리자만 알림 대상을 볼 수 있습니다." : "등록된 알림 대상이 없습니다."}</EmptyMsg>
         ) : (
           props.notifications.map((n) => (
             <NotificationCard key={n.id} n={n}
@@ -219,11 +228,13 @@ export function NotificationSection(props: {
           ))
         )}
 
-        <div className="space-y-2 border-t border-bd/8 pt-2">
-          <FInput value={name} onChange={setName} placeholder="이름 (선택)" compact onSubmit={handleAdd} />
-          <FInput value={url} onChange={setUrl} placeholder="https://host/api/receive" compact onSubmit={handleAdd} />
-          <PrimaryBtn onClick={handleAdd} full>+ 알림 URL 추가</PrimaryBtn>
-        </div>
+        {!readOnly ? (
+          <div className="space-y-2 border-t border-bd/8 pt-2">
+            <FInput value={name} onChange={setName} placeholder="이름 (선택)" compact onSubmit={handleAdd} />
+            <FInput value={url} onChange={setUrl} placeholder="https://host/api/receive" compact onSubmit={handleAdd} />
+            <PrimaryBtn onClick={handleAdd} full>+ 알림 URL 추가</PrimaryBtn>
+          </div>
+        ) : null}
       </div>
     </SideSection>
   );

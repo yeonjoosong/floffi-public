@@ -14,10 +14,14 @@ func (s *Server) handleWorkspace(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	store := ctx.store
+	canManageSecrets := canManageWorkspaceSecrets(ctx.member.Role, ctx.user.IsAdmin)
 
 	switch r.Method {
 	case http.MethodGet:
 		state := store.snapshot()
+		if !canManageSecrets {
+			state = redactWorkspaceSecrets(state)
+		}
 		w.Header().Set("ETag", store.getETag())
 		writeJSON(w, http.StatusOK, state)
 	case http.MethodPut:
@@ -46,8 +50,17 @@ func (s *Server) handleWorkspace(w http.ResponseWriter, r *http.Request) {
 		// ?reset=true: 보드 명시적 초기화 — merge 스킵, 완전 치환
 		// 일반 PUT: webhook 태스크/보고서/기록 로그 보존
 		isReset := r.URL.Query().Get("reset") == "true"
+		current := store.snapshot()
+		if !canManageSecrets {
+			next = preserveProtectedWorkspaceSecrets(next, current)
+		}
+		if err := validateNotificationTargets(next.Notifications); err != nil {
+			writeJSON(w, http.StatusBadRequest, map[string]any{
+				"error": "invalid_notification_target",
+			})
+			return
+		}
 		if !isReset {
-			current := store.snapshot()
 			next.Tasks = mergeTasksServerSide(current.Tasks, next.Tasks)
 			next.BossReports = mergeBossReportsServerSide(current.BossReports, next.BossReports)
 			next.Sessions = mergeSessionsServerSide(current.Sessions, next.Sessions)
@@ -63,7 +76,11 @@ func (s *Server) handleWorkspace(w http.ResponseWriter, r *http.Request) {
 		}
 
 		w.Header().Set("ETag", store.getETag())
-		writeJSON(w, http.StatusOK, store.snapshot())
+		saved := store.snapshot()
+		if !canManageSecrets {
+			saved = redactWorkspaceSecrets(saved)
+		}
+		writeJSON(w, http.StatusOK, saved)
 	default:
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 	}
