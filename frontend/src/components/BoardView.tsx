@@ -196,45 +196,6 @@ export { ConfirmToast } from "./ConfirmToast";
 // 공통 폰트 스택. 시스템 컬러 이모지 폰트를 우선 적용한다.
 const EMOJI_FONT = "\"Apple Color Emoji\",\"Segoe UI Emoji\",\"Noto Color Emoji\",\"Twemoji Mozilla\",sans-serif";
 
-function ToyMascots() {
-  return (
-    <div aria-hidden className="pointer-events-none fixed inset-0 z-40">
-      <div className="toy-mascot toy-mascot-pacman absolute bottom-3 right-3">
-        <img
-          src="/themes/toy/decor/gumball.png"
-          alt=""
-          width={84}
-          height={84}
-          draggable={false}
-          className="block h-[84px] w-[84px] object-contain"
-        />
-      </div>
-
-      <div className="toy-mascot toy-mascot-bear absolute bottom-3 left-3">
-        <img
-          src="/themes/toy/decor/puppy.png"
-          alt=""
-          width={84}
-          height={84}
-          draggable={false}
-          className="block h-[84px] w-[84px] object-contain"
-        />
-      </div>
-
-      <div className="toy-mascot toy-mascot-star absolute right-4" style={{ top: "70px" }}>
-        <img
-          src="/themes/toy/decor/ducklings.png"
-          alt=""
-          width={64}
-          height={76}
-          draggable={false}
-          className="block h-[76px] w-[64px] object-contain"
-        />
-      </div>
-    </div>
-  );
-}
-
 // ────────────────────────────────────────────────────────────────────────────
 
 type BoardViewProps = {
@@ -567,7 +528,6 @@ export function BoardView(props: BoardViewProps) {
       data-force-mobile={forceCompact ? "true" : undefined}
     >
 
-      {props.themeState.mode === "toy" ? <ToyMascots /> : null}
 
       <ConfirmToast
         open={clearInboxOpen}
