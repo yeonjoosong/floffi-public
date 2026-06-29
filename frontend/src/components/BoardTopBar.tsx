@@ -84,6 +84,7 @@ function BoardTitleInput({ value, onChange, placeholder }: { value: string; onCh
 
   return (
     <input
+      data-role="board-title"
       value={draft}
       onChange={(e) => setDraft(e.target.value)}
       onFocus={() => setFocused(true)}
@@ -98,7 +99,8 @@ function BoardTitleInput({ value, onChange, placeholder }: { value: string; onCh
         }
       }}
       placeholder={placeholder}
-      className="min-w-0 flex-1 truncate bg-transparent text-sm font-black tracking-tight text-t1 outline-none md:text-base"
+      className="min-w-0 flex-1 truncate bg-transparent text-sm font-black tracking-tight text-t1 placeholder:text-t3/60 outline-none md:text-base"
+      style={{ color: "rgb(var(--t1))", WebkitTextFillColor: "rgb(var(--t1))", opacity: 1 }}
     />
   );
 }

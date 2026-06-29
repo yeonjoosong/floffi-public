@@ -142,7 +142,7 @@ export function WorkspaceSwitcher(props: {
                   }}
                   placeholder="새 워크스페이스 이름"
                   autoFocus
-                  className="rounded-xl border-2 border-bd/10 bg-s2 px-2 py-1.5 text-[12px] text-t1 outline-none"
+                  className="rounded-xl border-2 border-bd/10 bg-s2 px-2 py-1.5 text-[12px] font-semibold text-t1 placeholder:text-t3/60 outline-none focus:border-ac/40 focus:bg-s1"
                 />
                 {error ? <p className="text-[11px] text-red-500">{error}</p> : null}
                 <div className="flex gap-1.5">

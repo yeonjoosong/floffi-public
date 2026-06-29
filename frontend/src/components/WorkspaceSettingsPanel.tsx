@@ -162,7 +162,7 @@ export function WorkspaceSettingsPanel(props: {
                 setRenameDraft(active.name);
               }
             }}
-            className="min-w-0 flex-1 rounded-xl border-2 border-bd/10 bg-s2 px-3 py-2 text-[12px] text-t1 outline-none disabled:opacity-60"
+            className="min-w-0 flex-1 rounded-xl border-2 border-bd/10 bg-s2 px-3 py-2 text-[12px] font-semibold text-t1 placeholder:text-t3/60 outline-none focus:border-ac/40 focus:bg-s1 disabled:opacity-60"
           />
           {isOwner ? (
             <button
@@ -391,7 +391,7 @@ function InviteModal(props: {
             onKeyDown={(e) => { if (e.key === "Enter") void submit(); }}
             placeholder="invitee@example.com"
             autoFocus
-            className="w-full rounded-xl border-2 border-bd/10 bg-s2 px-3 py-2 text-t1 outline-none"
+            className="w-full rounded-xl border-2 border-bd/10 bg-s2 px-3 py-2 font-semibold text-t1 placeholder:text-t3/60 outline-none focus:border-ac/40 focus:bg-s1"
           />
           {error ? <p className="text-[11px] text-red-500">{error}</p> : null}
           <div className="flex justify-end gap-2">
@@ -572,7 +572,7 @@ function PersonalModeConfirmModal(props: {
               onKeyDown={(e) => { if (e.key === "Enter" && canConfirm) void submit(); }}
               placeholder={props.workspaceName}
               autoFocus
-              className="w-full rounded-xl border-2 border-bd/10 bg-s2 px-3 py-2 text-t1 outline-none"
+              className="w-full rounded-xl border-2 border-bd/10 bg-s2 px-3 py-2 font-semibold text-t1 placeholder:text-t3/60 outline-none focus:border-ac/40 focus:bg-s1"
             />
             {error ? <p className="mt-2 text-[11px] text-red-500">{error}</p> : null}
           </div>
