@@ -137,13 +137,7 @@ func (s *Server) newHandler() http.Handler {
 	mux.HandleFunc("/assets/", s.handleAsset)
 	mux.HandleFunc("/themes/", s.handleAsset)
 	mux.HandleFunc("/favicon.ico", s.handleStaticFile)
-	mux.HandleFunc("/favicon.svg", s.handleStaticFile)
-	mux.HandleFunc("/favicon-16.png", s.handleStaticFile)
-	mux.HandleFunc("/favicon-32.png", s.handleStaticFile)
-	mux.HandleFunc("/favicon-48.png", s.handleStaticFile)
 	mux.HandleFunc("/favicon-180.png", s.handleStaticFile)
-	mux.HandleFunc("/favicon-192.png", s.handleStaticFile)
-	mux.HandleFunc("/favicon-512.png", s.handleStaticFile)
 	mux.HandleFunc("/readme-preview.html", s.handleStaticFile)
 	mux.HandleFunc("/readme-preview-assets/", s.handleStaticFile)
 	// withDevUIProxy MUST be outermost: the HMR websocket upgrade needs the
@@ -298,8 +292,8 @@ func (s *Server) serveAppShell(w http.ResponseWriter, r *http.Request) {
 </html>`)
 }
 
-// handleStaticFile serves files embedded from web/static (favicon and friends)
-// at top-level URL paths like /favicon.ico, /favicon.svg, /favicon-180.png.
+// handleStaticFile serves files embedded from web/static at top-level URL paths
+// like /favicon.ico and /favicon-180.png.
 func (s *Server) handleStaticFile(w http.ResponseWriter, r *http.Request) {
 	name := strings.TrimPrefix(path.Clean(r.URL.Path), "/")
 	data, err := fs.ReadFile(staticFS, "web/static/"+name)
