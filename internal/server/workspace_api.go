@@ -219,15 +219,9 @@ func (s *Server) handleTaskRun(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Synchronous run — blocks until response. agentMode가 "mcp"면 LLM 호출
-	// 없이 runbook [MCP] 단계만 실행하는 결정론 러너로 대체된다.
 	var reportText string
 	var err error
-	if state.Settings.AgentMode == "mcp" {
-		reportText, err = runMCPRunbookTask(r.Context(), task, store, s.authStore)
-	} else {
-		reportText, err = runAgentTask(r.Context(), task, agent, team, provider, s.limiter, s.quota, store, s.authStore)
-	}
+	reportText, err = runAgentTask(r.Context(), task, agent, team, provider, s.limiter, s.quota, store, s.authStore)
 	if err != nil {
 		// Revert to queued on failure
 		_ = store.setTaskExecution(taskID, "queued", "")

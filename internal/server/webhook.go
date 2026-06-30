@@ -138,11 +138,11 @@ func (s *Server) handleWebhookIngest(w http.ResponseWriter, r *http.Request) {
 
 	// Build workflow steps using fixed workflow agent/section IDs
 	defaultSteps := []workspaceWorkflowStep{
-		{AgentID: "planner",    SectionID: "wf-planning",  Label: "Plan"},
-		{AgentID: "builder",    SectionID: "wf-building",  Label: "Build"},
-		{AgentID: "executor",   SectionID: "wf-executing", Label: "Execute"},
-		{AgentID: "analyst",    SectionID: "wf-analysis",  Label: "Analyze"},
-		{AgentID: "summarizer", SectionID: "wf-review",    Label: "Summarize"},
+		{AgentID: "planner", SectionID: "wf-planning", Label: "Plan"},
+		{AgentID: "builder", SectionID: "wf-building", Label: "Build"},
+		{AgentID: "executor", SectionID: "wf-executing", Label: "Execute"},
+		{AgentID: "analyst", SectionID: "wf-analysis", Label: "Analyze"},
+		{AgentID: "summarizer", SectionID: "wf-review", Label: "Summarize"},
 	}
 
 	firstStep := defaultSteps[0]
@@ -218,13 +218,6 @@ func (s *Server) runWebhookWorkflow(workspaceID, taskID string) {
 	store, err := s.workspaces.For(ctx, workspaceID)
 	if err != nil {
 		return // workspace was deleted while the task was queued
-	}
-
-	// AI 에이전트 OFF(agentMode="mcp") — LLM 5단계 파이프라인 대신 runbook의
-	// [MCP] 단계를 결정론적으로 실행하는 단일 패스로 처리한다.
-	if store.snapshot().Settings.AgentMode == "mcp" {
-		s.runMCPWebhookWorkflow(ctx, store, taskID)
-		return
 	}
 
 	for {
@@ -436,11 +429,11 @@ func (s *Server) ingestAlarmingPayload(w http.ResponseWriter, store *workspaceSt
 	// path produces so runWebhookWorkflow handles it without branching.
 	state := store.snapshot()
 	defaultSteps := []workspaceWorkflowStep{
-		{AgentID: "planner",    SectionID: "wf-planning",  Label: "Plan"},
-		{AgentID: "builder",    SectionID: "wf-building",  Label: "Build"},
-		{AgentID: "executor",   SectionID: "wf-executing", Label: "Execute"},
-		{AgentID: "analyst",    SectionID: "wf-analysis",  Label: "Analyze"},
-		{AgentID: "summarizer", SectionID: "wf-review",    Label: "Summarize"},
+		{AgentID: "planner", SectionID: "wf-planning", Label: "Plan"},
+		{AgentID: "builder", SectionID: "wf-building", Label: "Build"},
+		{AgentID: "executor", SectionID: "wf-executing", Label: "Execute"},
+		{AgentID: "analyst", SectionID: "wf-analysis", Label: "Analyze"},
+		{AgentID: "summarizer", SectionID: "wf-review", Label: "Summarize"},
 	}
 	firstStep := defaultSteps[0]
 	assigneeName := ""

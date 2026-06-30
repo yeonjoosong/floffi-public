@@ -52,16 +52,16 @@ func loadOwnerMemoriesForPrompt(ctx context.Context, authStore *auth.Store, work
 // loadRAGHitsForPrompt runs the FTS5 retrieval that gets injected into the
 // agent prompt. Returns nil (no header rendered) when:
 //
-//   * the task has no usable query terms,
-//   * the workspace has no approved content yet,
-//   * or the DB call fails. RAG is best-effort and never blocks an agent run.
+//   - the task has no usable query terms,
+//   - the workspace has no approved content yet,
+//   - or the DB call fails. RAG is best-effort and never blocks an agent run.
 //
 // Filtering policy:
-//   * minTrust = 0.7  — only approved reports + user-authored vault docs
+//   - minTrust = 0.7  — only approved reports + user-authored vault docs
 //     reach the prompt (옵션 C)
-//   * top-K = 5
-//   * total inject budget = 4KB (truncate longer snippets)
-//   * workflow tasks only retrieve at step 0; later steps see retrieval
+//   - top-K = 5
+//   - total inject budget = 4KB (truncate longer snippets)
+//   - workflow tasks only retrieve at step 0; later steps see retrieval
 //     via AccContext to keep per-task LLM cost predictable
 func loadRAGHitsForPrompt(ctx context.Context, authStore *auth.Store, workspaceID string, task workspaceTask) []ragHit {
 	if authStore == nil || workspaceID == "" {
@@ -161,9 +161,9 @@ func ragMatchExpr(query string) string {
 // limiter instance so concurrent calls don't collectively exceed the quota.
 
 type llmRateLimiter struct {
-	mu      sync.Mutex
+	mu       sync.Mutex
 	lastSent time.Time
-	gap     time.Duration // minimum gap between calls = 60s / RPM
+	gap      time.Duration // minimum gap between calls = 60s / RPM
 }
 
 func newLLMRateLimiter() *llmRateLimiter {
@@ -299,13 +299,6 @@ func (q *dailyQuota) tryConsume() (used, limit int, ok bool) {
 // On rate-limit errors the retry waits ≥ 65 s; on other transient errors it
 // uses 2 s → 4 s → 8 s exponential backoff (max 5 attempts).
 func runAgentTask(ctx context.Context, task workspaceTask, agent workspaceAgent, team workspaceTeam, provider workspaceProvider, lim *llmRateLimiter, quota *dailyQuota, store *workspaceStore, authStore *auth.Store) (string, error) {
-	// Hard block — agentMode="mcp" means the AI agent is fully disabled for
-	// this workspace. Callers route to runMCPRunbookTask instead; this check
-	// is defense-in-depth so no forgotten/new call site can reach an LLM
-	// while the toggle is off.
-	if store.snapshot().Settings.AgentMode == "mcp" {
-		return "", fmt.Errorf("AI 에이전트가 비활성화되어 있습니다 (MCP 전용 모드) — LLM 호출이 차단됨")
-	}
 	attachmentBlock := collectAttachmentsForPrompt(store, task)
 	// Settings.DisplayName lets the user override the legacy "보스" honorific.
 	// Empty falls back to "보스" inside buildAgentPrompt.

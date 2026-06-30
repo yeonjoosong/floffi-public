@@ -67,7 +67,6 @@ const emptyWorkspace: WorkspaceState = {
     promptMode: "task",
     memoryLevel: "L1",
     idleLogoutMinutes: 15,
-    agentMode: "ai",
   },
   teams: [],
   teamMembers: [],

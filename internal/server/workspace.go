@@ -227,16 +227,6 @@ type workspaceSettings struct {
 	// "explicitly disabled" (0). normalize() resolves the pointer to a
 	// concrete value before save.
 	IdleLogoutMinutes *int `json:"idleLogoutMinutes,omitempty"`
-	// AgentMode gates who executes workflows:
-	//   "ai"  (default) — the LLM agent runs the 5-step workflow as usual.
-	//   "mcp"           — the LLM is FULLY blocked (runAgentTask refuses);
-	//                     webhook alarms and manual runs are handled by the
-	//                     deterministic MCP runbook runner instead, which
-	//                     executes the runbook's [MCP] tool steps and files
-	//                     the raw outputs as the report. String (not bool) so
-	//                     legacy states without the field decode to "" and
-	//                     normalize to "ai" instead of silently flipping off.
-	AgentMode string `json:"agentMode"`
 }
 
 // defaultIdleLogoutMinutes is the fallback when the workspace doesn't have
@@ -727,7 +717,6 @@ func defaultWorkspaceState() workspaceState {
 			PromptMode:        "task",
 			MemoryLevel:       "L1",
 			IdleLogoutMinutes: func() *int { v := defaultIdleLogoutMinutes; return &v }(),
-			AgentMode:         "ai",
 		},
 		Teams: []workspaceTeam{
 			{ID: "alpha-team", Name: "Alpha Team", Mission: "Plan, build, and report back to the boss."},
@@ -1004,11 +993,6 @@ func normalizeWorkspaceState(state workspaceState) workspaceState {
 	if !slices.Contains([]string{"L0", "L1", "L2"}, state.Settings.MemoryLevel) {
 		state.Settings.MemoryLevel = "L1"
 	}
-	// "" covers legacy states saved before the field existed → AI stays on.
-	if !slices.Contains([]string{"ai", "mcp"}, state.Settings.AgentMode) {
-		state.Settings.AgentMode = "ai"
-	}
-
 	// Idle logout: legacy workspaces without the field get the default;
 	// values outside the allowed set get clamped to the default to keep
 	// the UI dropdown honest. 0 is allowed (= disabled).

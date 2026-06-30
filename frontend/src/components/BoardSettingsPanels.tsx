@@ -143,25 +143,6 @@ export function BoardSettingsAIPanel(props: {
 
   return (
     <>
-      <SideSection title="AI 에이전트">
-        <Card>
-          <div className="flex items-center justify-between gap-2">
-            <p className="text-sm font-bold text-t1">AI 에이전트 실행</p>
-            <Toggle
-              on={(props.workspaceSettings.agentMode ?? "ai") === "ai"}
-              onClick={() => props.onWorkspaceSettingsChange({
-                ...props.workspaceSettings,
-                agentMode: (props.workspaceSettings.agentMode ?? "ai") === "ai" ? "mcp" : "ai",
-              })}
-            />
-          </div>
-          <p className="mt-1.5 text-[10.5px] leading-relaxed text-t3">
-            {(props.workspaceSettings.agentMode ?? "ai") === "ai"
-              ? "ON — AI 에이전트가 워크플로(5단계)를 실행합니다."
-              : "OFF — LLM 호출이 완전히 차단됩니다. 알람·수동 실행은 runbook의 [MCP] 섹션에 정의된 MCP 도구만 순서대로 실행하고, 수집된 원시 값으로 보고서를 만듭니다."}
-          </p>
-        </Card>
-      </SideSection>
 
       <SideSection title="AI 프로바이더">
         {props.providers.length === 0 ? (

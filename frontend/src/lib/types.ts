@@ -119,9 +119,6 @@ export type WorkspaceSettings = {
   // 이 값을 넘으면 경고 토스트가 뜨고, 이후 카운트다운이 끝나면 자동 로그아웃.
   // 절대 한계(8시간)는 이 값과 무관하게 항상 작동.
   idleLogoutMinutes?: number;
-  // AI 에이전트 토글: "ai"(기본) = LLM이 워크플로 실행. "mcp" = LLM 완전
-  // 차단 — 알람/수동 실행 모두 runbook의 [MCP] 단계만 결정론적으로 실행.
-  agentMode?: "ai" | "mcp";
 };
 
 export type AgentMember = {
