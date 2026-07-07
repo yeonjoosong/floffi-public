@@ -14,9 +14,9 @@ import type { WorkspaceListItem } from "../lib/workspaces";
 //     pushing it to the rail would compete with the existing icon
 //     stack for limited mobile width.
 //
-// The cap is rendered as "N / cap" inside the trigger so the user
-// always knows how close they are to the limit without opening the
-// dropdown.
+// The trigger shows the active workspace position as "current / total" so
+// switching workspaces updates the label immediately. The cap still matters
+// for creation, but it is secondary to answering "which workspace am I in".
 export function WorkspaceSwitcher(props: {
   workspaces: WorkspaceListItem[];
   activeID: string;
@@ -46,8 +46,10 @@ export function WorkspaceSwitcher(props: {
     return () => document.removeEventListener("mousedown", onDoc);
   }, [open]);
 
-  const active = props.workspaces.find((w) => w.id === props.activeID);
-  const atCap = props.workspaces.length >= props.cap;
+  const activeIndex = props.workspaces.findIndex((w) => w.id === props.activeID);
+  const currentPosition = activeIndex >= 0 ? activeIndex + 1 : 0;
+  const totalWorkspaces = props.workspaces.length;
+  const atCap = totalWorkspaces >= props.cap;
 
   async function submitCreate() {
     const name = newName.trim();
@@ -76,11 +78,11 @@ export function WorkspaceSwitcher(props: {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        title="워크스페이스 전환"
+        title={`워크스페이스 전환 (${totalWorkspaces}/${props.cap}개 사용 중)`}
         className="flex items-center gap-1.5 rounded-xl px-2 py-1 text-[11px] font-bold text-t2 transition hover:bg-s2 hover:text-t1"
       >
         <span className="rounded-md border border-bd/20 bg-s2 px-1.5 py-0.5 text-[10px] font-black">
-          {props.workspaces.length}/{props.cap}
+          {currentPosition}/{Math.max(totalWorkspaces, 1)}
         </span>
         <span className="hidden xl:inline">전환</span>
         <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" aria-hidden>
@@ -93,8 +95,9 @@ export function WorkspaceSwitcher(props: {
           className="absolute left-0 top-full z-40 mt-1 w-72 rounded-2xl border-2 border-bd/10 bg-s1 p-2 shadow-2xl"
           data-role="card"
         >
-          <div className="mb-1 px-2 py-1 text-[10px] font-black uppercase tracking-wider text-t3">
-            워크스페이스
+          <div className="mb-1 flex items-center justify-between px-2 py-1 text-[10px] font-black uppercase tracking-wider text-t3">
+            <span>워크스페이스</span>
+            <span className="normal-case tracking-normal text-[10px] text-t3">{totalWorkspaces}/{props.cap}개 사용 중</span>
           </div>
           <ul className="max-h-64 overflow-y-auto space-y-0.5">
             {props.workspaces.length === 0 ? (
