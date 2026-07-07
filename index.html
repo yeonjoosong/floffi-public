@@ -49,7 +49,7 @@
     box-shadow: inset 0 1px 0 rgba(255,255,255,0.65);
   }
   .lang-btn {
-    border: 0; background: transparent; color: var(--muted); padding: 8px 12px; border-radius: 999px; font: inherit; font-size: 12px; font-weight: 700; cursor: pointer;
+    border: 0; background: transparent; color: var(--muted); padding: 8px 14px; border-radius: 999px; font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; min-width: 78px; text-align: center;
   }
   .lang-btn[aria-pressed="true"] { background: rgba(15,109,112,0.12); color: var(--accent); }
   .layout { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 24px; align-items: start; }
@@ -67,7 +67,8 @@
   .hero-card { padding: 16px; border-radius: 18px; background: rgba(255,255,255,0.66); border: 1px solid rgba(255,255,255,0.85); }
   .hero-card strong { display: block; margin-bottom: 6px; font-size: 14px; }
   .hero-card span { font-size: 13px; color: var(--muted); }
-  .section { padding: 28px 30px 30px; }
+  .section { padding: 28px 30px 30px; scroll-margin-top: 108px; }
+  .hero { scroll-margin-top: 108px; }
   .section h2 { font-size: 28px; margin-bottom: 8px; letter-spacing: -0.02em; }
   .section > .lede { color: var(--muted); max-width: 74ch; margin-bottom: 20px; }
   .grid-2, .visual-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
@@ -81,15 +82,20 @@
   .visual { overflow: hidden; border-radius: 24px; border: 1px solid var(--line); background: #f8f5ef; box-shadow: 0 16px 30px rgba(31,41,55,0.06); }
   .visual img { display: block; width: 100%; height: auto; }
   .visual figcaption { padding: 14px 16px; font-size: 13px; color: var(--muted); background: rgba(255,255,255,0.88); border-top: 1px solid var(--line); }
-  .sidebar { position: sticky; top: 92px; display: flex; flex-direction: column; gap: 18px; }
-  .sidebar .card { padding: 20px; border-radius: 24px; background: rgba(255, 253, 248, 0.88); border: 1px solid rgba(255,255,255,0.76); box-shadow: var(--shadow); }
+  .sidebar { position: sticky; top: 92px; display: flex; flex-direction: column; gap: 18px; max-height: calc(100vh - 108px); overflow-y: auto; padding: 0; scrollbar-width: none; }
+  .sidebar::-webkit-scrollbar { width: 0; height: 0; }
+  .sidebar::-webkit-scrollbar-track { background: transparent; }
+  .sidebar::-webkit-scrollbar-thumb { background: transparent; }
+  .sidebar .card { padding: 20px; border-radius: 24px; background: var(--panel-strong); border: 1px solid rgba(255,255,255,0.82); box-shadow: none; flex: 0 0 auto; }
   .sidebar h3 { font-size: 15px; margin-bottom: 10px; }
   .nav-list { list-style: none; padding: 0; display: grid; gap: 8px; }
   .nav-list a { display: block; padding: 10px 12px; border-radius: 14px; color: var(--ink); background: rgba(255,255,255,0.62); border: 1px solid rgba(31,41,55,0.08); font-size: 13px; }
   .meta-list { display: grid; gap: 10px; font-size: 13px; color: var(--muted); }
   .quote { padding: 18px 20px; border-left: 4px solid var(--warm); background: rgba(255,255,255,0.72); border-radius: 0 18px 18px 0; color: var(--muted); font-size: 15px; }
+  .inline-chip { display: inline-flex; align-items: center; padding: 0.18rem 0.55rem; border-radius: 999px; border: 1px solid rgba(15,109,112,0.18); background: rgba(15,109,112,0.1); color: var(--accent); font-size: 0.92em; font-weight: 700; line-height: 1.2; vertical-align: baseline; white-space: nowrap; }
+  .product-chip { border-color: rgba(56, 189, 248, 0.28); background: rgba(56, 189, 248, 0.16); color: #0c6aa6; box-shadow: inset 0 1px 0 rgba(255,255,255,0.55); }
   .footer { padding: 24px 28px 28px; font-size: 13px; color: var(--muted); }
-  @media (max-width: 1080px) { .layout { grid-template-columns: 1fr; } .sidebar { position: static; } }
+  @media (max-width: 1080px) { .layout { grid-template-columns: 1fr; } .sidebar { position: static; max-height: none; overflow: visible; padding: 0; } }
   @media (max-width: 780px) {
     .shell { width: min(100vw - 20px, 100%); padding-top: 10px; }
     .topbar { position: static; border-radius: 20px; }
@@ -108,8 +114,8 @@
       </div>
       <div class="actions">
         <div class="lang-toggle" aria-label="Language toggle">
-          <button type="button" class="lang-btn" data-lang="en" aria-pressed="true">EN</button>
-          <button type="button" class="lang-btn" data-lang="ko" aria-pressed="false">KO</button>
+          <button type="button" class="lang-btn" data-lang="en" aria-pressed="true">English</button>
+          <button type="button" class="lang-btn" data-lang="ko" aria-pressed="false">한국어</button>
         </div>
       </div>
     </div>
@@ -118,7 +124,7 @@
         <section class="panel hero" id="top">
           <span class="eyebrow" data-i18n="heroEyebrow">AI Agent Orchestration Workspace</span>
           <h1 data-i18n-html="heroTitle">floffi keeps AI work reviewable, recoverable, and operable.</h1>
-          <p data-i18n="heroBody">`floffi` is an AI agent orchestration workspace for creating, executing, reviewing, and operating multi-step agent work. This page is a browser-friendly landing preview of the public README, published as a static portfolio page.</p>
+          <p data-i18n-html="heroBody"><span class='inline-chip product-chip'>floffi</span> is an AI agent orchestration workspace for creating, executing, reviewing, and operating multi-step agent work. This page is a browser-friendly landing preview of the public README, served by the same Go app as the product.</p>
           <div class="hero-grid">
             <div class="hero-card"><strong data-i18n="heroCard1Title">Why it matters</strong><span data-i18n="heroCard1Body">Shows orchestration complexity across auth, tenancy, workflow state, webhooks, notifications, persistence, and search.</span></div>
             <div class="hero-card"><strong data-i18n="heroCard2Title">What it proves</strong><span data-i18n="heroCard2Body">Agent output can be structured into explicit review, rollback, restore, and operator-facing control paths.</span></div>
@@ -127,7 +133,7 @@
         </section>
         <section class="panel section" id="exists">
           <h2 data-i18n="existsTitle">Why This Project Exists</h2>
-          <p class="lede" data-i18n="existsLede">Most AI applications solve a single request. `floffi` explores the harder problem: how to keep AI work operable inside a real product.</p>
+          <p class="lede" data-i18n-html="existsLede">Most AI applications solve a single request. <span class='inline-chip product-chip'>floffi</span> explores the harder problem: how to keep AI work operable inside a real product.</p>
           <ul class="checklist">
             <li data-i18n="exists1">Users create or receive work inside a workspace</li>
             <li data-i18n="exists2">Agents hand off tasks across explicit workflow stages</li>
@@ -168,26 +174,30 @@
           <h2 data-i18n="workflowTitle">Core Product Flows</h2>
           <p class="lede" data-i18n="workflowLede">The product is easiest to understand as four connected flows: agent handoff on the board, boss-gated report review, repeatable runbook-style operations, and webhook/notification-driven intake.</p>
           <ul class="checklist">
-            <li data-i18n="workflow1">Agent-to-agent handoff across explicit workflow stages</li>
-            <li data-i18n="workflow2">Boss approval and rejection before AI output becomes accepted state</li>
-            <li data-i18n="workflow3">Repeatable runbook-style execution instead of one-shot prompting</li>
-            <li data-i18n="workflow4">Webhook-triggered work intake and operator-facing notification paths</li>
-            <li data-i18n="workflow5">Searchable workspace context after the run is complete</li>
+            <li data-i18n="workflow1">Authenticate into a personal or shared workspace and enter an isolated operating context.</li>
+            <li data-i18n="workflow2">Create work manually, trigger it from a runbook, or ingest it through a webhook entrypoint.</li>
+            <li data-i18n="workflow3">Move tasks across agent-owned workflow stages on the kanban board while preserving operator visibility.</li>
+            <li data-i18n="workflow4">Land generated output in the boss inbox so approval, rejection, rerun, and restore remain explicit review actions.</li>
+            <li data-i18n="workflow5">Persist workflow state, notifications, search context, and review decisions back into the workspace model.</li>
           </ul>
         </section>
         <section class="panel section" id="visuals">
           <h2 data-i18n="visualsTitle">Representative Demo Visuals</h2>
-          <p class="lede" data-i18n="visualsLede">These visuals are actual captures from a seeded `floffi` workspace. The emphasis here is on the product-defining flows: workflow handoff, boss review, repeatable operations, and external intake.</p>
-          <figure class="visual"><a href="./readme-preview-assets/agent-workflow.gif" target="_blank" rel="noreferrer"><img src="./readme-preview-assets/agent-workflow.gif" alt="Animated workflow reel for floffi" /></a><figcaption data-i18n="visualCap1">End-to-end workflow reel: secure entry, kanban orchestration, report generation, boss approval, and searchable operator context.</figcaption></figure>
+          <p class="lede" data-i18n-html="visualsLede">These visuals are actual captures from a seeded <span class='inline-chip product-chip'>floffi</span> workspace, so the preview reflects the implemented product UI rather than an illustrative mockup.</p>
+          <figure class="visual"><a href="./readme-preview-assets/agent-workflow.gif" target="_blank" rel="noreferrer"><img src="./readme-preview-assets/agent-workflow.gif" alt="Animated workflow reel for floffi" /></a><figcaption data-i18n="visualCap1">End-to-end workflow reel that ties together task creation, agent handoff, boss review, and searchable operating context.</figcaption></figure>
           <div class="visual-grid" style="margin-top:16px;">
-            <figure class="visual"><a href="./readme-preview-assets/board-workflow.png" target="_blank" rel="noreferrer"><img src="./readme-preview-assets/board-workflow.png" alt="Workflow board" /></a><figcaption data-i18n="visualCap2">The primary product surface: a kanban board where agents hand work off across explicit workflow stages and operators can inspect state in context.</figcaption></figure>
-            <figure class="visual"><a href="./readme-preview-assets/boss-inbox-review.png" target="_blank" rel="noreferrer"><img src="./readme-preview-assets/boss-inbox-review.png" alt="Boss inbox review" /></a><figcaption data-i18n="visualCap3">Boss-gated report review: output is approved, rejected, rerun, and restored through an explicit operator decision loop.</figcaption></figure>
+            <figure class="visual"><a href="./readme-preview-assets/auto-assignment-start.png" target="_blank" rel="noreferrer"><img src="./readme-preview-assets/auto-assignment-start.png" alt="Task creation and auto assignment" /></a><figcaption data-i18n="visualCap2">Task creation and auto-assignment start point: the operator chooses the initial team, assignee, and whether the task begins as a single run or a workflow.</figcaption></figure>
+            <figure class="visual"><a href="./readme-preview-assets/board-workflow.png" target="_blank" rel="noreferrer"><img src="./readme-preview-assets/board-workflow.png" alt="Workflow board" /></a><figcaption data-i18n="visualCap3">Workflow progression surface: the kanban board shows where work starts, which stage currently owns it, and how agent handoff stays inspectable.</figcaption></figure>
           </div>
-          <figure class="visual" style="margin-top:16px;"><a href="./readme-preview-assets/webhook-or-vault.png" target="_blank" rel="noreferrer"><img src="./readme-preview-assets/webhook-or-vault.png" alt="External operations and context" /></a><figcaption data-i18n="visualCap4">External operations and context surfaces: webhook-driven intake, notification-aware operator flow, and searchable vault or memory context after execution.</figcaption></figure>
           <div class="visual-grid" style="margin-top:16px;">
-            <figure class="visual"><a href="./readme-preview-assets/workspace-switcher.png" target="_blank" rel="noreferrer"><img src="./readme-preview-assets/workspace-switcher.png" alt="Workspace switcher" /></a><figcaption data-i18n="visualCap5">Supporting product surface for tenancy and collaboration: personal and shared workspaces, membership context, and workspace switching.</figcaption></figure>
-            <figure class="visual"><a href="./readme-preview-assets/login-security.png" target="_blank" rel="noreferrer"><img src="./readme-preview-assets/login-security.png" alt="Login and security view" /></a><figcaption data-i18n="visualCap6">Supporting security surface with login, MFA, and session-oriented account controls.</figcaption></figure>
+            <figure class="visual"><a href="./readme-preview-assets/boss-report-actions.png" target="_blank" rel="noreferrer"><img src="./readme-preview-assets/boss-report-actions.png" alt="Boss inbox actions" /></a><figcaption data-i18n="visualCap4">Boss inbox gate: generated output is not auto-accepted, and approve or request-revision remains an explicit operator decision.</figcaption></figure>
+            <figure class="visual"><a href="./readme-preview-assets/boss-report-full-view.png" target="_blank" rel="noreferrer"><img src="./readme-preview-assets/boss-report-full-view.png" alt="Full report review modal" /></a><figcaption data-i18n="visualCap5">Full report review modal with the complete generated body, export path, and rerun-oriented controls before the workflow advances or closes.</figcaption></figure>
           </div>
+          <div class="visual-grid" style="margin-top:16px;">
+            <figure class="visual"><a href="./readme-preview-assets/webhook-or-vault.png" target="_blank" rel="noreferrer"><img src="./readme-preview-assets/webhook-or-vault.png" alt="External operations and context" /></a><figcaption data-i18n="visualCap6">External operations and context surfaces: webhook-driven intake, notification-aware operator flow, and searchable vault or memory context after execution.</figcaption></figure>
+            <figure class="visual"><a href="./readme-preview-assets/workspace-switcher.png" target="_blank" rel="noreferrer"><img src="./readme-preview-assets/workspace-switcher.png" alt="Workspace switcher" /></a><figcaption data-i18n="visualCap7">Supporting tenancy and collaboration surface with personal or shared workspaces, membership context, and workspace switching.</figcaption></figure>
+          </div>
+          <figure class="visual" style="margin-top:16px;"><a href="./readme-preview-assets/login-security.png" target="_blank" rel="noreferrer"><img src="./readme-preview-assets/login-security.png" alt="Login and security view" /></a><figcaption data-i18n="visualCap8">Supporting security surface with login, MFA, and session-oriented account controls.</figcaption></figure>
         </section>
         <section class="panel section" id="operable">
           <h2 data-i18n="operableTitle">How The System Stays Operable</h2>
@@ -217,7 +227,7 @@ npm --prefix frontend exec tsc --noEmit</div>
         </section>
         <section class="panel section" id="takeaway">
           <h2 data-i18n="takeawayTitle">Portfolio Framing</h2>
-          <div class="quote" data-i18n="takeawayBody">`floffi` is an AI agent orchestration workspace that treats orchestration as a real product problem. The engineering value is in making agent-driven work reviewable, recoverable, and operable across auth, tenancy, workflow review, integrations, and persistence.</div>
+          <div class="quote" data-i18n-html="takeawayBody"><span class='inline-chip product-chip'>floffi</span> is an AI agent orchestration workspace that treats orchestration as a real product problem. The engineering value is in making agent-driven work reviewable, recoverable, and operable across auth, tenancy, workflow review, integrations, and persistence.</div>
         </section>
       </main>
       <aside class="sidebar">
@@ -228,15 +238,15 @@ npm --prefix frontend exec tsc --noEmit</div>
             <li><a href="#exists" data-i18n="jump2">Why This Project Exists</a></li>
             <li><a href="#hard" data-i18n="jump3">Why This Is Hard</a></li>
             <li><a href="#decisions" data-i18n="jump4">Engineering Decisions</a></li>
-            <li><a href="#workflow" data-i18n="jump5">Core Product Flows</a></li>
-            <li><a href="#visuals" data-i18n="jump6">Demo Visuals</a></li>
-            <li><a href="#operable" data-i18n="jump7">Operable Design</a></li>
-            <li><a href="#stack" data-i18n="jump8">System Shape</a></li>
-            <li><a href="#quickstart" data-i18n="jump9">Quick Start</a></li>
-            <li><a href="#takeaway" data-i18n="jump10">Portfolio Framing</a>
+            <li><a href="#architecture" data-i18n="jump5">Architecture</a></li>
+            <li><a href="#workflow" data-i18n="jump6">Core Product Flows</a></li>
+            <li><a href="#visuals" data-i18n="jump7">Demo Visuals</a></li>
+            <li><a href="#operable" data-i18n="jump8">Operable Design</a></li>
+            <li><a href="#stack" data-i18n="jump9">System Shape</a></li>
+            <li><a href="#quickstart" data-i18n="jump10">Quick Start</a></li>
+            <li><a href="#takeaway" data-i18n="jump11">Portfolio Framing</a></li>
           </ul>
         </div>
-        <div class="card"><h3 data-i18n="notesTitle">Preview Notes</h3><div class="meta-list"><div data-i18n="notes1">Published as a static GitHub Pages preview.</div><div data-i18n="notes2">Uses repository assets under `readme-preview-assets/`.</div><div data-i18n="notes3">Structured as a compact project landing page for hiring review.</div><div><a href="https://github.com/yeonjoosong/floffi-public" target="_blank" rel="noreferrer" data-i18n="notesRepo">Open the public repository</a></div><div><a href="https://yeonjoosong.github.io/floffi-public/" target="_blank" rel="noreferrer" data-i18n="notesSite">Open the live GitHub Pages site</a></div></div></div>
       </aside>
     </div>
   </div>
@@ -250,7 +260,7 @@ npm --prefix frontend exec tsc --noEmit</div>
       navFavicon: "Favicon Preview",
       heroEyebrow: "AI Agent Orchestration Workspace",
       heroTitle: "floffi keeps AI work reviewable, recoverable, and operable.",
-      heroBody: "`floffi` is an AI agent orchestration workspace for creating, executing, reviewing, and operating multi-step agent work. This page is a browser-friendly landing preview of the public README, published as a static portfolio page.",
+      heroBody: "<span class='inline-chip product-chip'>floffi</span> is an AI agent orchestration workspace for creating, executing, reviewing, and operating multi-step agent work. This page is a browser-friendly landing preview of the public README, served by the same Go app as the product.",
       heroCard1Title: "Why it matters",
       heroCard1Body: "Shows orchestration complexity across auth, tenancy, workflow state, webhooks, notifications, persistence, and search.",
       heroCard2Title: "What it proves",
@@ -258,7 +268,7 @@ npm --prefix frontend exec tsc --noEmit</div>
       heroCard3Title: "Who it is for",
       heroCard3Body: "Hiring managers and engineering leads scanning for evidence of end-to-end product ownership.",
       existsTitle: "Why This Project Exists",
-      existsLede: "Most AI applications solve a single request. `floffi` explores the harder problem: how to keep AI work operable inside a real product.",
+      existsLede: "Most AI applications solve a single request. <span class='inline-chip product-chip'>floffi</span> explores the harder problem: how to keep AI work operable inside a real product.",
       exists1: "Users create or receive work inside a workspace",
       exists2: "Agents hand off tasks across explicit workflow stages",
       exists3: "Results go through a boss inbox instead of being blindly accepted",
@@ -290,13 +300,15 @@ npm --prefix frontend exec tsc --noEmit</div>
       decision4Title: "Frontend complexity is decomposed intentionally",
       decision4Body: "Hooks and split panels keep orchestration behavior evolvable without turning one top-level component into the entire product.",
       visualsTitle: "Representative Demo Visuals",
-      visualsLede: "These visuals are actual captures from a seeded `floffi` workspace. The emphasis here is on the product-defining flows: workflow handoff, boss review, repeatable operations, and external intake.",
-      visualCap1: "End-to-end workflow reel: secure entry, kanban orchestration, report generation, boss approval, and searchable operator context.",
-      visualCap2: "The primary product surface: a kanban board where agents hand work off across explicit workflow stages and operators can inspect state in context.",
-      visualCap3: "Boss-gated report review: output is approved, rejected, rerun, and restored through an explicit operator decision loop.",
-      visualCap4: "External operations and context surfaces: webhook-driven intake, notification-aware operator flow, and searchable vault or memory context after execution.",
-      visualCap5: "Supporting product surface for tenancy and collaboration: personal and shared workspaces, membership context, and workspace switching.",
-      visualCap6: "Supporting security surface with login, MFA, and session-oriented account controls.",
+      visualsLede: "These visuals are actual captures from a seeded <span class='inline-chip product-chip'>floffi</span> workspace, so the preview reflects the implemented product UI rather than an illustrative mockup.",
+      visualCap1: "End-to-end workflow reel that ties together task creation, agent handoff, boss review, and searchable operating context.",
+      visualCap2: "Task creation and auto-assignment start point: the operator chooses the initial team, assignee, and whether the task begins as a single run or a workflow.",
+      visualCap3: "Workflow progression surface: the kanban board shows where work starts, which stage currently owns it, and how agent handoff stays inspectable.",
+      visualCap4: "Boss inbox gate: generated output is not auto-accepted, and approve or request-revision remains an explicit operator decision.",
+      visualCap5: "Full report review modal with the complete generated body, export path, and rerun-oriented controls before the workflow advances or closes.",
+      visualCap6: "External operations and context surfaces: webhook-driven intake, notification-aware operator flow, and searchable vault or memory context after execution.",
+      visualCap7: "Supporting tenancy and collaboration surface with personal or shared workspaces, membership context, and workspace switching.",
+      visualCap8: "Supporting security surface with login, MFA, and session-oriented account controls.",
       architectureTitle: "Architecture At A Glance",
       architectureLede: "The system is organized as one product surface: a React workspace UI on top of a Go API, with auth, workspace tenancy, workflow and review logic, webhook ingestion, LLM provider abstraction, and SQLite-backed persistence.",
       architectureCard1Title: "Client and API",
@@ -308,6 +320,13 @@ npm --prefix frontend exec tsc --noEmit</div>
       architectureCard4Title: "Integrations",
       architectureCard4Body: "Workflow execution fans out to LLM providers through one abstraction layer and can receive work through webhook ingress or emit outbound notifications.",
       architectureDiagram: "React Workspace UI<br>↓<br>Go HTTP API<br>↓<br>Auth / Workspace / Workflow / Review / Webhook<br>↓<br>SQLite + Filesystem<br>↓<br>LLM Provider Abstraction + Notifications",
+      workflowTitle: "Core Product Flows",
+      workflowLede: "The product is easiest to understand as four connected flows: agent handoff on the board, boss-gated report review, repeatable runbook-style operations, and webhook/notification-driven intake.",
+      workflow1: "Authenticate into a personal or shared workspace and enter an isolated operating context.",
+      workflow2: "Create work manually, trigger it from a runbook, or ingest it through a webhook entrypoint.",
+      workflow3: "Move tasks across agent-owned workflow stages on the kanban board while preserving operator visibility.",
+      workflow4: "Land generated output in the boss inbox so approval, rejection, rerun, and restore remain explicit review actions.",
+      workflow5: "Persist workflow state, notifications, search context, and review decisions back into the workspace model.",
       operableTitle: "How The System Stays Operable",
       operable1Title: "Frontend decomposition",
       operable1Body: "Large UI control flow was split into focused hooks and panels instead of leaving orchestration logic in a single oversized component.",
@@ -329,25 +348,20 @@ npm --prefix frontend exec tsc --noEmit</div>
       quickstartTitle: "Quick Start and Validation",
       quickstartLede: "This is the shortest path to running and validating the public branch locally.",
       takeawayTitle: "Portfolio Framing",
-      takeawayBody: "`floffi` is an AI agent orchestration workspace that treats orchestration as a real product problem. The engineering value is in making agent-driven work reviewable, recoverable, and operable across auth, tenancy, workflow review, integrations, and persistence.",
+      takeawayBody: "<span class='inline-chip product-chip'>floffi</span> is an AI agent orchestration workspace that treats orchestration as a real product problem. The engineering value is in making agent-driven work reviewable, recoverable, and operable across auth, tenancy, workflow review, integrations, and persistence.",
       footerText: "Open this page through the Go server at",
       jumpTitle: "Jump To",
       jump1: "Overview",
       jump2: "Why This Project Exists",
       jump3: "Why This Is Hard",
       jump4: "Engineering Decisions",
-      jump5: "Core Product Flows",
-      jump6: "Demo Visuals",
-      jump7: "Operable Design",
-      jump8: "System Shape",
-      jump9: "Quick Start",
-      jump10: "Portfolio Framing",
-      notesTitle: "Preview Notes",
-      notes1: "Published as a static GitHub Pages preview.",
-      notes2: "Uses repository assets under `readme-preview-assets/`.",
-      notes3: "Structured as a compact project landing page for hiring review.",
-      notesRepo: "Open the public repository",
-      notesSite: "Open the live GitHub Pages site",
+      jump5: "Architecture",
+      jump6: "Core Product Flows",
+      jump7: "Demo Visuals",
+      jump8: "Operable Design",
+      jump9: "System Shape",
+      jump10: "Quick Start",
+      jump11: "Portfolio Framing",
       openPathTitle: "Open Path",
       openPathBody: "Run",
       openPathBody2: "and open the URL above."
@@ -360,7 +374,7 @@ npm --prefix frontend exec tsc --noEmit</div>
       navFavicon: "파비콘 미리보기",
       heroEyebrow: "AI 에이전트 오케스트레이션 워크스페이스",
       heroTitle: "floffi는 AI 작업을<br>검토 가능하고,<br>복구 가능하며,<br>운영 가능한<br>형태로 관리합니다.",
-      heroBody: "`floffi`는 다단계 에이전트 작업을 생성, 실행, 검토, 운영하기 위한 AI 에이전트 오케스트레이션 워크스페이스입니다. 이 페이지는 공개용 README를 브라우저 친화적으로 미리 보여주는 랜딩 프리뷰이며, 정적 포트폴리오 페이지로 공개됩니다.",
+      heroBody: "<span class='inline-chip product-chip'>floffi</span>는 다단계 에이전트 작업을 생성, 실행, 검토, 운영하기 위한 AI 에이전트 오케스트레이션 워크스페이스입니다. 이 페이지는 공개용 README를 브라우저 친화적으로 미리 보여주는 랜딩 프리뷰이며, 실제 제품과 같은 Go 앱이 직접 제공합니다.",
       heroCard1Title: "왜 중요한가",
       heroCard1Body: "인증, 테넌시, 워크플로 상태, 웹훅, 알림, 영속성, 검색까지 오케스트레이션 복잡도를 보여줍니다.",
       heroCard2Title: "무엇을 증명하는가",
@@ -368,7 +382,7 @@ npm --prefix frontend exec tsc --noEmit</div>
       heroCard3Title: "누가 보면 좋은가",
       heroCard3Body: "엔드투엔드 제품 소유 경험의 증거를 빠르게 확인하려는 채용 담당자와 엔지니어링 리드입니다.",
       existsTitle: "왜 이 프로젝트를 만들었는가",
-      existsLede: "대부분의 AI 애플리케이션은 단일 요청 처리에서 끝납니다. `floffi`는 AI 작업을 실제 서비스에서 지속적으로 운영 가능한 구조로 만드는 방법을 다룹니다.",
+      existsLede: "대부분의 AI 애플리케이션은 단일 요청 처리에서 끝납니다. <span class='inline-chip product-chip'>floffi</span>는 AI 작업을 실제 서비스에서 지속적으로 운영 가능한 구조로 만드는 방법을 다룹니다.",
       exists1: "사용자는 워크스페이스 안에서 작업을 만들거나 전달받습니다",
       exists2: "에이전트는 명시적인 워크플로 단계를 따라 작업을 핸드오프합니다",
       exists3: "결과는 검토함(Boss Inbox)을 통해 검토되며, 무조건 수용되지 않습니다",
@@ -396,19 +410,21 @@ npm --prefix frontend exec tsc --noEmit</div>
       decision2Title: "워크스페이스 격리는 도메인 모델의 일부입니다",
       decision2Body: "테넌시는 보드 UI 뒤에 덧붙인 개념이 아니라 인증, 멤버십, 워크스페이스 전환, owner/admin 흐름에 내장되어 있습니다.",
       decision3Title: "실행만큼 롤백도 중요합니다",
-      decision3Body: "리뷰 액션과 복원 흐름은 저장 실패 시 인터페이스 상태가 영속 상태보다 앞서가지 않도록 설계했습니다.",
+      decision3Body: "리뷰 액션과 복원 흐름은 저장 실패 시 UI 상태와 저장 상태의 불일치가 생기지 않도록 설계했습니다.",
       decision4Title: "프론트엔드 복잡도는 의도적으로 분해했습니다",
-      decision4Body: "Hook과 분리된 패널 구조로 오케스트레이션 동작을 확장 가능하게 유지하고, 하나의 최상위 컴포넌트가 전체 제품을 먹지 않게 했습니다.",
+      decision4Body: "Hook과 분리된 패널 구조로 오케스트레이션 동작을 확장 가능하게 유지하고, 하나의 최상위 컴포넌트에 제품 로직이 집중되지 않도록 했습니다.",
       visualsTitle: "대표 데모 화면",
-      visualsLede: "이 화면들은 seed된 `floffi` 워크스페이스에서 실제로 캡처한 결과입니다. 여기서는 workflow handoff, boss review, 반복 운영, 외부 작업 유입처럼 제품을 정의하는 흐름을 중심으로 보여줍니다.",
-      visualCap1: "보안 진입, kanban 오케스트레이션, 리포트 생성, boss 승인, 검색 가능한 운영자 컨텍스트까지 이어지는 전체 흐름입니다.",
-      visualCap2: "가장 중요한 제품 표면입니다. kanban 보드 위에서 에이전트가 단계별로 작업을 넘기고, 운영자는 상태를 문맥 안에서 확인합니다.",
-      visualCap3: "Boss-gated report review 화면입니다. 출력은 자동 수용되지 않고, 운영자 결정 루프 안에서 승인, 거절, 재실행, 복원됩니다.",
-      visualCap4: "외부 작업 유입과 컨텍스트 화면입니다. webhook 기반 실행, 알림을 고려한 운영 흐름, 그리고 실행 후 vault/memory 검색 맥락을 보여줍니다.",
-      visualCap5: "테넌시와 협업을 위한 보조 제품 표면입니다. 개인/공유 워크스페이스, 멤버십 컨텍스트, 워크스페이스 전환을 담습니다.",
-      visualCap6: "로그인, MFA, 세션 제어를 포함한 보조 보안 표면입니다.",
+      visualsLede: "이 화면들은 시드 데이터가 적용된 <span class='inline-chip product-chip'>floffi</span> 워크스페이스에서 실제로 캡처한 결과라서, 단순한 예시 목업이 아니라 구현된 제품 UI를 그대로 반영합니다.",
+      visualCap1: "태스크 생성, 에이전트 핸드오프, boss review, 검색 가능한 운영 컨텍스트를 한 번에 묶어 보여주는 전체 흐름입니다.",
+      visualCap2: "태스크 생성과 자동 배치 시작점입니다. 운영자가 초기 팀, 담당자, 단건 실행인지 워크플로인지 직접 정합니다.",
+      visualCap3: "워크플로 진행 표면입니다. kanban 보드에서 작업이 어느 단계에서 시작되고, 현재 어느 단계가 소유하는지, 핸드오프가 어떻게 보이는지 보여줍니다.",
+      visualCap4: "Boss Inbox 게이트입니다. 생성된 출력은 자동 수용되지 않고, 승인과 재요청이 명시적 운영자 판단으로 남습니다.",
+      visualCap5: "보고서 전체 보기 모달입니다. 생성된 전체 본문, 저장 경로, 재실행 중심 제어를 거친 뒤에야 워크플로가 다음 단계로 가거나 종료됩니다.",
+      visualCap6: "외부 작업 유입과 컨텍스트 화면입니다. webhook 기반 실행, 알림을 고려한 운영 흐름, 그리고 실행 후 vault/memory 검색 맥락을 보여줍니다.",
+      visualCap7: "테넌시와 협업을 위한 보조 표면입니다. 개인/공유 워크스페이스, 멤버십 컨텍스트, 워크스페이스 전환을 담습니다.",
+      visualCap8: "로그인, MFA, 세션 관리를 포함한 계정 보안 화면입니다. 운영 가능한 제품을 위해 필요한 인증 및 계정 관리 기능을 제공합니다.",
       architectureTitle: "아키텍처 한눈에 보기",
-      architectureLede: "이 시스템은 React 워크스페이스 UI 위에 Go API를 두고, 그 아래에 인증, 워크스페이스 테넌시, 워크플로와 리뷰 로직, 웹훅 유입, LLM 연동 추상화, SQLite 기반 영속성을 하나의 제품 표면으로 묶어 구성합니다.",
+      architectureLede: "이 시스템은 React 워크스페이스 UI 위에 Go API를 두고, 그 아래에 인증, 워크스페이스 테넌시, 워크플로와 리뷰 로직, 웹훅 유입, LLM 연동 추상화, SQLite 기반 영속성을 하나의 제품 흐름으로 묶어 구성합니다.",
       architectureCard1Title: "클라이언트와 API",
       architectureCard1Body: "React 워크스페이스 UI는 Go HTTP API와 통신하고, 이 API가 인증, 워크스페이스, 워크플로, 운영자용 제품 동작을 소유합니다.",
       architectureCard2Title: "핵심 도메인",
@@ -416,21 +432,21 @@ npm --prefix frontend exec tsc --noEmit</div>
       architectureCard3Title: "영속성",
       architectureCard3Body: "인증, 세션, 워크스페이스 메타데이터는 SQLite에 저장되고, 첨부파일은 파일시스템에 저장되어 장기 운영 상태를 구성합니다.",
       architectureCard4Title: "연동",
-      architectureCard4Body: "워크플로 실행은 하나의 LLM 추상화 계층을 통해 provider로 fan-out되며, 웹훅 유입이나 외부 알림 전송과도 연결됩니다.",
+      architectureCard4Body: "워크플로 실행은 하나의 LLM 추상화 계층을 통해 여러 LLM provider로 분기되며, 웹훅 유입이나 외부 알림 전송과도 연결됩니다.",
       architectureDiagram: "React 워크스페이스 UI<br>↓<br>Go HTTP API<br>↓<br>인증 / 워크스페이스 / 워크플로 / 리뷰 / 웹훅<br>↓<br>SQLite + 파일시스템<br>↓<br>LLM 연동 추상화 + 알림",
       workflowTitle: "핵심 제품 흐름",
       workflowLede: "이 제품은 네 가지 연결된 흐름으로 이해하는 것이 가장 빠릅니다. 보드 위 에이전트 핸드오프, boss-gated report review, 반복 가능한 runbook 스타일 운영, 그리고 webhook/notification 기반 작업 유입입니다.",
-      workflow1: "에이전트가 명시적 워크플로 단계를 따라 작업을 서로 핸드오프합니다",
-      workflow2: "AI 출력은 boss 승인/거절을 거친 뒤에만 확정 상태가 됩니다",
-      workflow3: "일회성 프롬프트가 아니라 반복 가능한 runbook 스타일 실행을 다룹니다",
-      workflow4: "웹훅 기반 작업 유입과 운영자용 알림 경로를 함께 다룹니다",
-      workflow5: "실행 이후에도 워크스페이스 컨텍스트를 검색 가능하게 유지합니다",
+      workflow1: "개인 또는 공유 워크스페이스에 인증하여 진입하고, 격리된 운영 컨텍스트로 들어갑니다.",
+      workflow2: "작업을 수동으로 만들거나, runbook으로 트리거하거나, webhook 진입점으로 유입합니다.",
+      workflow3: "kanban 보드 위에서 에이전트가 소유한 단계들을 따라 작업을 넘기고, 운영자는 그 상태를 계속 추적합니다.",
+      workflow4: "생성된 결과는 boss inbox로 도착하며, 승인, 거절, 재실행, 복원이 명시적 리뷰 액션으로 처리됩니다.",
+      workflow5: "워크플로 상태, 알림, 검색 컨텍스트, 리뷰 결정을 다시 워크스페이스 모델에 영속화합니다",
       operableTitle: "어떻게 운영 가능한 상태를 유지하는가",
       operable1Title: "프론트엔드 분해",
       operable1Body: "큰 UI 제어 흐름을 하나의 비대한 컴포넌트에 몰지 않고, 역할이 분명한 hook과 패널로 나눴습니다.",
       operable2Title: "실패 경로 롤백",
       operable2Body: "boss review 액션은 영속화 실패 시 로컬 UI 상태를 되돌려, 인터페이스와 저장 상태의 드리프트를 줄입니다.",
-      operable3Title: "영속성 규율",
+      operable3Title: "데이터 저장 전략",
       operable3Body: "워크스페이스 저장은 단순 덮어쓰기가 아니라 동시성 인지 패턴과 복구 경로를 사용합니다.",
       operable4Title: "회귀 테스트 기반 검증",
       operable4Body: "워크플로 상태, 리포트 처리, 복원 경로는 리뷰 기반 발견 이후 회귀 테스트로 방어하고 있습니다.",
@@ -446,24 +462,20 @@ npm --prefix frontend exec tsc --noEmit</div>
       quickstartTitle: "빠른 실행과 검증",
       quickstartLede: "공개 브랜치를 로컬에서 실행하고 검증하는 가장 짧은 경로입니다.",
       takeawayTitle: "포트폴리오 관점 요약",
-      takeawayBody: "`floffi`는 오케스트레이션을 실제 제품 문제로 다루는 AI agent orchestration workspace입니다. 핵심 엔지니어링 가치는 에이전트 기반 작업을 인증, 테넌시, 리뷰 워크플로, 연동, 영속성 위에서 검토 가능하고 복구 가능하며 운영 가능하게 만드는 데 있습니다.",
+      takeawayBody: "<span class='inline-chip product-chip'>floffi</span>는 오케스트레이션을 실제 제품 문제로 다루는 AI agent orchestration workspace입니다. 핵심 엔지니어링 가치는 에이전트 기반 작업을 인증, 테넌시, 리뷰 워크플로, 연동, 영속성 위에서 검토 가능하고 복구 가능하며 운영 가능하게 만드는 데 있습니다.",
       footerText: "이 페이지는 Go 서버의 다음 경로로 열 수 있습니다",
       jumpTitle: "바로가기",
-      jump1: "개요",
+      jump1: "프로젝트 소개",
       jump2: "프로젝트 목적",
-      jump3: "어려운 이유",
-      jump4: "설계 결정",
-      jump5: "핵심 제품 흐름",
-      jump6: "데모 화면",
-      jump11: "워크플로 개요",
-      jump7: "운영 가능성",
-      jump8: "시스템 구성",
-      jump9: "빠른 실행",
-      jump10: "포트폴리오 요약",
-      notesTitle: "프리뷰 메모",
-      notes1: "GitHub Pages용 정적 프리뷰로 공개합니다.",
-      notes2: "`readme-preview-assets/` 아래의 저장소 자산을 사용합니다.",
-      notes3: "채용 검토용 압축 랜딩 페이지 형태로 구성했습니다.",
+      jump3: "왜 어려운가",
+      jump4: "주요 설계 결정",
+      jump5: "아키텍처",
+      jump6: "핵심 워크플로",
+      jump7: "데모 화면",
+      jump8: "운영 설계",
+      jump9: "시스템 구성",
+      jump10: "빠른 시작",
+      jump11: "프로젝트 요약",
       openPathTitle: "열기 경로",
       openPathBody: "다음을 실행한 뒤",
       openPathBody2: "위 URL을 열면 됩니다."
